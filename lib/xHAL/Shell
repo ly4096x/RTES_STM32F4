@@ -1,0 +1,22 @@
+#pragma once
+#include <xHAL/SerialDevice>
+
+namespace xHAL {
+
+struct ShellCommand {
+    char *cmd;
+    u8 len;
+    int (*func)(char *args);
+};
+
+class Shell {
+    ShellCommand * const commandsList;
+
+public:
+    Shell(ShellCommand *cmds);
+
+    void run();
+    int handleCommand(char *line);
+};
+
+}

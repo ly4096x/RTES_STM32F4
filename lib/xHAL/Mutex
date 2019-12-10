@@ -1,0 +1,25 @@
+#pragma once
+extern "C" {
+#include <FreeRTOS.h>
+#include <task.h>
+#include <semphr.h>
+}
+#include "board_common.h"
+
+namespace xHAL {
+
+class Mutex {
+    SemaphoreHandle_t mutex;
+    bool recursive;
+
+public:
+    TaskHandle_t holder;
+
+    Mutex(bool recursive = false);
+
+    bool lock(const u32 blockTime = 1 * configTICK_RATE_HZ);
+
+    bool unlock();
+};
+
+}

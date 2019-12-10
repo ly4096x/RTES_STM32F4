@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+    <TITLE>Your Title Here</TITLE>
+    <style>
+        div {
+            clear: both;
+            width: 100%;
+        }
+        textarea {
+            font-family: Consolas;
+            width: 100%;
+            resize: vertical;
+        }
+        #status {
+            width: 60px;
+            margin-left: 20px;
+            /*display: inline;*/
+            font-size: 20px;
+            /*float: right;*/
+        }
+        #sendtxt {
+            /*margin-left: 30px;*/
+            width: 100%;
+        }
+    </style>
+</HEAD>
+<BODY>
+    <div style="display: table;">
+        <input style="display: table-cell; width: 300px;" type="text" id="wsurl" value="ws://localhost:8888/"/>
+        <button style="display: table-cell;" type="button" onclick="updateType()">Update</button>
+        <h1 style="display: table-cell;" id='status'>READY</h1>
+    </div>
+    <div>
+        <textarea id="errbox" placeholder="No err msgs..."></textarea>
+    </div>
+    <div>
+        <textarea id="tb">Your text here</textarea>
+    </div>
+    <div>
+        <input type="text" id="sendtxt" placeholder='To send...'/>
+    </div>
+</BODY>
+<script>
+    let tb = document.querySelector('#tb');
+    let errb = document.querySelector('#errbox');
+    let writeToErr = (s) => {
+        document.querySelector('#errbox').value += "\n" + s;
+        errb.scrollTop = errb.scrollHeight;
+    };
+    let writeToTb = (s) => {
+        document.querySelector('#tb').value += s;
+        tb.scrollTop = tb.scrollHeight;
+    };
+
+    let socket = null;
+    let newwsurl = null;
+    let opennewws = (url) => {
+        socket = new WebSocket(url);
+        socket.onopen = onopenHandler;
+        socket.onmessage=onmessageHandler;
+        socket.onclose=oncloseHandler;
+        socket.onerror=onerrorHandler;
+    };
+
+    let onopenHandler = (e) => {
+        writeToErr("[open] Connection established");
+        newwsurl = null;
+    };
+
+    let onmessageHandler = (event) => {
+        writeToTb(`${event.data}`);
+    };
+
+    let oncloseHandler = (event) => {
+        if (event.wasClean) {
+            writeToErr(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+        } else {
+            // e.g. server process killed or network down
+            // event.code is usually 1006 in this case
+            writeToErr('[close] Connection died');
+        }
+        if (newwsurl)
+            opennewws(newwsurl);
+    };
+
+    let onerrorHandler = (error) => {
+        writeToErr(`[error] ${error.message}`);
+    };
+
+    let updateType = () => {
+        newwsurl = document.querySelector("#wsurl").value;
+        if (socket && socket.readyState == 1)
+            socket.close();
+        else opennewws(newwsurl);
+    };
+
+    //document.querySelector('#')
+</script>
+</HTML>

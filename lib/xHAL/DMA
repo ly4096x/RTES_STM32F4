@@ -1,0 +1,28 @@
+#pragma once
+extern "C" {
+#include <stm32f4xx_ll_dma.h>
+#include <FreeRTOS.h>
+#include <task.h>
+}
+#include "board_common.h"
+#include "TaskNotificationIds.h"
+
+namespace xHAL {
+
+class DMA {
+    DMA_TypeDef *dma_dev;
+    u32 dma_channel;
+    const TaskNotificationIds notifyId;
+    TaskHandle_t caller;
+
+public:
+    DMA(DMA_TypeDef *dev, u32 channel, const TaskNotificationIds _notifyId = INVALID_NOTIFY_VALUE);
+
+    void startTransmit(u8 *from, u32 len);
+
+    u32 waitForComplete(u32 timeout = 1 * configTICK_RATE_HZ);
+
+    void interruptHandler(const bool TC, const bool TE);
+};
+
+}

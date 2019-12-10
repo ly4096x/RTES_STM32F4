@@ -1,0 +1,16 @@
+﻿BasedOnStyle: Chromium
+SortIncludes: 'false'
+AllowAllParametersOfDeclarationOnNextLine: 'true'
+AllowShortBlocksOnASingleLine: 'true'
+AllowShortCaseLabelsOnASingleLine: 'true'
+AllowShortFunctionsOnASingleLine: All
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: 'true'
+ColumnLimit: '140'
+IndentWidth: '4'
+TabWidth: '4'
+UseTab: Never
+AlignAfterOpenBracket: AlwaysBreak
+PointerAlignment: Right
+SpaceAfterTemplateKeyword: 'false'
+#ContinuationIndentWidth: '4'
