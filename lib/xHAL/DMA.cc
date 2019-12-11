@@ -22,6 +22,7 @@ void DMA::startTransmit(u8 *from, u32 len) {
 }
 
 void DMA::waitForComplete(u32 deadline) {
+    caller = xTaskGetCurrentTaskHandle();
     waitForNotification(notifyId, deadline);
 }
 

@@ -2,17 +2,17 @@
 
 namespace xHAL {
 
-void waitForNotification(const TaskNotificationIds expectedNotifyId, u32 deadline) {
+void waitForNotification(const TaskNotificationIds expectedNotifyId, u32 deadline, bool waitForever) {
     u32 notifiedValue = INVALID_NOTIFY_VALUE;
     while (notifiedValue != expectedNotifyId) {
-        if (!xTaskNotifyWait(0, 0, &notifiedValue, getTimeout(deadline)))
+        if (!xTaskNotifyWait(0, 0, &notifiedValue, waitForever ? portMAX_DELAY : getTimeout(deadline)))
             FailAndInfiniteLoop();
     }
 }
 
 void notifyThread(const TaskHandle_t &caller, const TaskNotificationIds notifyId) {
-    BaseType_t shouldYield;
     if (isInISR()) {
+        BaseType_t shouldYield;
         xTaskNotifyFromISR(caller, notifyId, eSetValueWithOverwrite, &shouldYield);
         portYIELD_FROM_ISR(shouldYield);
     } else {

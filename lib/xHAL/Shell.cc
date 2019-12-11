@@ -25,7 +25,7 @@ void Shell::run() {
     console.setEcho(true);
     while (1) {
         console.printf(">>> ");
-        u32 len = console.readline(line, sizeof(line), -1);
+        u32 len = console.readline(line, sizeof(line));
         handleCommand(line);
         console.printf("[%s] STACK_UNUSED = %10" PRIu32 "\n",
                 pcTaskGetName(xTaskGetCurrentTaskHandle()), uxTaskGetStackHighWaterMark(xTaskGetCurrentTaskHandle()));

@@ -50,6 +50,7 @@ int main(void) {
     MX_TIM4_Init();
     MX_USART1_UART_Init();
     LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_7, LL_USART_DMA_GetRegAddr(USART1));
+    LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_0);
 
     enable_cycle_counter();
 
@@ -101,7 +102,7 @@ void servo_thread(void *param) {
         if (val > LL_TIM_GetAutoReload(TIM4)) val = 0;
         console.printf("[%s] STACK_UNUSED = %3" PRIu32 " val = %" PRIu16 "\n", pcTaskGetName(thisTask), uxTaskGetStackHighWaterMark(thisTask), val);
         LL_TIM_OC_SetCompareCH1(TIM4, val);
-        vTaskDelay(1);
+        vTaskDelay(10);
     }
 }
 

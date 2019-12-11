@@ -11,10 +11,14 @@ SerialDevice::SerialDevice(const TaskNotificationIds _txNotifyId, const TaskNoti
         rxbuf_begin(rxbuf),
         rxbuf_end(rxbuf),
         rxEcho(0)
-{}
+{
+    txbuf_end = txbuf;
+}
 
 u32 SerialDevice::writeCharToBulk(char c, bool flush, u32 deadline) {
-    static char txbuf[64], *txbuf_end = txbuf;
+    AutoLock lock(txMutex, deadline);
+    if (!lock.successful()) return 0;
+
     if (!(c == 0 && flush))
         *txbuf_end++ = c;
     if (txbuf_end == txbuf + sizeof(txbuf) || c == '\n' || flush) {
@@ -44,33 +48,34 @@ u32 SerialDevice::printf(const char *fmt, ...) {
     return len;
 }
 
-char SerialDevice::getChar(u32 deadline) {
+char SerialDevice::getChar(u32 deadline, bool waitForever) {
+    u32 timeout = getTimeout(deadline);
     char ret;
-    ret = peekChar(deadline);
+    ret = peekChar(deadline, waitForever);
     if (rxEcho) {
-        writeCharToBulk(ret, true, deadline);
+        writeCharToBulk(ret, true, waitForever ? getDeadline(timeout) : deadline);
     }
     ++rxbuf_begin;
     if (rxbuf_begin == rxbuf + sizeof(rxbuf))
         rxbuf_begin = rxbuf;
     return ret;
 }
-char SerialDevice::peekChar(u32 deadline) {
+char SerialDevice::peekChar(u32 deadline, bool waitForever) {
     if (rxbuf_begin == rxbuf_end) {
         rxCaller = xTaskGetCurrentTaskHandle();
-        waitForNotification(rxNotifyId, deadline);
+        waitForNotification(rxNotifyId, deadline, waitForever);
     }
     return *rxbuf_begin;
 }
 
-u32 SerialDevice::readline(char *_dst, const u32 maxLength, u32 deadline) {
+u32 SerialDevice::readline(char *_dst, const u32 maxLength, u32 deadline, bool waitForever) {
     AutoLock lock(rxMutex, deadline);
     if (!lock.successful()) return 0;
 
     const char *dst = _dst;
     char *dst_end = _dst;
     while (dst_end - dst != maxLength - 1) {
-        *dst_end = getChar(portMAX_DELAY);
+        *dst_end = getChar(deadline, waitForever);
         if (*dst_end == 0x0c && dst_end > dst) {
             --dst_end;
             continue;
@@ -81,7 +86,7 @@ u32 SerialDevice::readline(char *_dst, const u32 maxLength, u32 deadline) {
 
     int retlen = dst_end - _dst;
     if (*dst_end != '\n') {
-        while (getChar(portMAX_DELAY) != '\n');
+        while (getChar(deadline, waitForever) != '\n');
         const char *msg = "rx_overflow";
         strcpy(_dst, msg);
         retlen = strlen(msg);

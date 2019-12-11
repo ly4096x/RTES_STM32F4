@@ -41,9 +41,9 @@ void delay_micros(u32 delay_us);
 inline bool isInISR(void) { return (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0; }
 
 inline u32 getSysTickCount() { return isInISR() ? xTaskGetTickCountFromISR() : xTaskGetTickCount(); }
-inline u32 getDeadline(u32 timeout = DEFAULT_TIMEOUT) { return timeout + getSysTickCount(); }
-inline u32 getTimeout(u32 deadline) {
-    u32 ret = deadline - getSysTickCount();
+inline u32 getDeadline(const u32 timeout = DEFAULT_TIMEOUT) { return timeout + getSysTickCount(); }
+inline u32 getTimeout(const u32 deadline) {
+    i32 ret = deadline - getSysTickCount();
     if (ret < 0) ret = 0;
     return ret;
 }

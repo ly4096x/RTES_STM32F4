@@ -22,6 +22,7 @@ protected:
     const TaskNotificationIds txNotifyId, rxNotifyId;
 
     u8 rxbuf[64];
+    char txbuf[64], *txbuf_end;
     u8 *rxbuf_begin, *rxbuf_end;
     bool rxEcho;
 
@@ -33,9 +34,9 @@ public:
 
     virtual u32 write(u8 *data, u32 len, u32 deadline = getDeadline()) = 0;
     u32 printf(const char *fmt, ...);
-    char getChar(u32 deadline);
-    char peekChar(u32 deadline);
-    u32 readline(char *dst, const u32 maxLength, u32 deadline = getDeadline());
+    char getChar(u32 deadline, bool waitForever);
+    char peekChar(u32 deadline, bool waitForever);
+    u32 readline(char *dst, const u32 maxLength, u32 deadline = getDeadline(), bool waitForever = true);
     void setEcho(const bool shouldEcho) {
         rxEcho=shouldEcho;
     }
