@@ -64,7 +64,7 @@ char SerialDevice::peekChar(u32 deadline) {
 }
 
 u32 SerialDevice::readline(char *_dst, const u32 maxLength, u32 deadline) {
-    AutoLock lock(txMutex, deadline);
+    AutoLock lock(rxMutex, deadline);
     if (!lock.successful()) return 0;
 
     const char *dst = _dst;

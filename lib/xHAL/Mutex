@@ -9,7 +9,7 @@ extern "C" {
 namespace xHAL {
 
 class Mutex {
-    SemaphoreHandle_t mutex;
+    StaticSemaphore_t mutex;
     bool recursive;
 
 public:
