@@ -10,10 +10,10 @@ extern "C" {
 #include <xHAL/USART>
 #include <xHAL/Mutex>
 
+#if 0
 static xHAL::Mutex print_console_mutex;
-
 extern "C"
-int _write(int file, char *data, int len) {
+int _write_working_but_disabled(int file, char *data, int len) {
     if (file != STDOUT_FILENO && file != STDERR_FILENO) {
         errno = EBADF;
         return -1;
@@ -28,10 +28,11 @@ int _write(int file, char *data, int len) {
 
     return len;
 }
+#endif
 
 extern "C"
 void *malloc(size_t size) {
-    void *ptr = NULL;
+    void *ptr = nullptr;
     if (size > 0)
         ptr = pvPortMalloc(size);
     return ptr;
@@ -42,3 +43,11 @@ void free(void *ptr) {
     if (ptr)
         vPortFree(ptr);
 }
+
+void *operator new(size_t size) { return malloc(size); }
+
+void *operator new[](size_t size) { return malloc(size); }
+
+void operator delete(void *p) { free(p); }
+
+void operator delete[](void *p) { free(p); }

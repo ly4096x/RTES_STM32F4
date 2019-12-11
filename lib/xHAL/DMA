@@ -20,7 +20,7 @@ public:
 
     void startTransmit(u8 *from, u32 len);
 
-    u32 waitForComplete(u32 timeout = 1 * configTICK_RATE_HZ);
+    void waitForComplete(u32 deadline = getDeadline());
 
     void interruptHandler(const bool TC, const bool TE);
 };

@@ -1,0 +1,12 @@
+#pragma once
+#include <board_common.h>
+#include <FreeRTOS.h>
+#include <task.h>
+#include <TaskNotificationIds.h>
+
+namespace xHAL {
+
+void waitForNotification(const TaskNotificationIds expectedNotifyId, u32 deadline = getDeadline());
+void notifyThread(const TaskHandle_t &caller, const TaskNotificationIds notifyId);
+
+}

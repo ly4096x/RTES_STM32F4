@@ -19,14 +19,14 @@ class USART : public SerialDevice {
 public:
     USART(USART_TypeDef *dev, DMA *dmaTx = nullptr, const TaskNotificationIds _txNotifyId = INVALID_NOTIFY_VALUE, const TaskNotificationIds _rxNotifyId = INVALID_NOTIFY_VALUE);
 
-    u32 write(u8 *data, u32 len, u32 timeout = 1 * configTICK_RATE_HZ) {
+    u32 write(u8 *data, u32 len, u32 deadline = getDeadline()) {
         return isInISR() ?
-                writeWithPolling(data, len, timeout) :
-                writeWithDma(data, len, timeout);
+                writeWithPolling(data, len, deadline) :
+                writeWithDma(data, len, deadline);
     }
-    u32 writeWithPolling(u8 *data, u32 len, u32 timeout = 1 * configTICK_RATE_HZ);
-    u32 writeWithInterrupt(u8 *data, u32 len, u32 timeout = 1 * configTICK_RATE_HZ);
-    u32 writeWithDma(u8 *data, u32 len, u32 timeout = 1 * configTICK_RATE_HZ);
+    u32 writeWithPolling(u8 *data, u32 len, u32 deadline = getDeadline());
+    u32 writeWithInterrupt(u8 *data, u32 len, u32 deadline = getDeadline());
+    u32 writeWithDma(u8 *data, u32 len, u32 deadline = getDeadline());
 
     void txInterruptHandler();
     void rxInterruptHandler();

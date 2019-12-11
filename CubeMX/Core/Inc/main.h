@@ -76,12 +76,13 @@ void SystemClock_Config(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define SW_K1_Pin LL_GPIO_PIN_0
-#define SW_K1_GPIO_Port GPIOA
 #define LED_OnBoard_Pin LL_GPIO_PIN_1
 #define LED_OnBoard_GPIO_Port GPIOA
 #define SPI_Flash_NCS_Pin LL_GPIO_PIN_15
 #define SPI_Flash_NCS_GPIO_Port GPIOA
+#define VL53L1X_INT_Pin LL_GPIO_PIN_0
+#define VL53L1X_INT_GPIO_Port GPIOE
+#define VL53L1X_INT_EXTI_IRQn EXTI0_IRQn
 #ifndef NVIC_PRIORITYGROUP_0
 #define NVIC_PRIORITYGROUP_0         ((uint32_t)0x00000007) /*!< 0 bit  for pre-emption priority,
                                                                  4 bits for subpriority */

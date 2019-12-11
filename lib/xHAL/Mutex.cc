@@ -6,13 +6,14 @@ Mutex::Mutex(bool recursive) : recursive(recursive) {
     mutex = recursive ? xSemaphoreCreateRecursiveMutex() : xSemaphoreCreateMutex();
 }
 
-bool Mutex::lock(const u32 timeout) {
+bool Mutex::lock(const u32 deadline) {
     bool ret, shouldYield;
     if (isInISR()) {
         ret = xSemaphoreTakeFromISR(mutex, (BaseType_t *)&shouldYield);
         portYIELD_FROM_ISR(shouldYield);
         holder = nullptr;
     } else {
+        u32 timeout = getTimeout(deadline);
         ret = recursive ? xSemaphoreTakeRecursive(mutex, timeout) : xSemaphoreTake(mutex, timeout);
         holder = xTaskGetCurrentTaskHandle();
     }

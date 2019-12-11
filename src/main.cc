@@ -17,8 +17,6 @@ extern "C" {
 #include <xHAL/Shell>
 #include "TaskNotificationIds.h"
 
-#include <Adafruit-PWM-Servo-Driver-Library/Adafruit_PWMServoDriver.h>
-
 void idle_thread(void *param);
 void main_thread(void *param);
 void servo_thread(void *param);

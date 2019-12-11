@@ -58,7 +58,9 @@
         "portable.h": "c",
         "stm32f4xx.h": "c",
         "stm32f4xx_ll_gpio.h": "c",
-        "i2c.h": "c"
+        "i2c.h": "c",
+        "threadutils": "cpp",
+        "i2c": "cpp"
     },
     "C_Cpp.configurationWarnings": "Disabled",
     "cmake.configureOnOpen": true

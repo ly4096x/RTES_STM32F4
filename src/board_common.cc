@@ -13,5 +13,3 @@ void FailAndInfiniteLoop(){
     LL_GPIO_ResetOutputPin(Error_LED_Port, Error_LED_Pin);
     while (1) debug_break();
 }
-
-extern "C" void __cxa_pure_virtual() { FailAndInfiniteLoop(); }

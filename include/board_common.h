@@ -1,10 +1,13 @@
 #pragma once
 #include "stm32f4xx.h"
+#include <FreeRTOS.h>
+#include <task.h>
 
 #define PRINT_CONSOLE_BUFFER_SIZE 400
 #define CONSOLE_UART USART3
 #define Error_LED_Pin LL_GPIO_PIN_1
 #define Error_LED_Port GPIOA
+#define DEFAULT_TIMEOUT (1 * configTICK_RATE_HZ)
 
 //=============================================================
 
@@ -36,6 +39,14 @@ inline const u32 get_cpu_frequency(void) {
 void delay_micros(u32 delay_us);
 
 inline bool isInISR(void) { return (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0; }
+
+inline u32 getSysTickCount() { return isInISR() ? xTaskGetTickCountFromISR() : xTaskGetTickCount(); }
+inline u32 getDeadline(u32 timeout = DEFAULT_TIMEOUT) { return timeout + getSysTickCount(); }
+inline u32 getTimeout(u32 deadline) {
+    u32 ret = deadline - getSysTickCount();
+    if (ret < 0) ret = 0;
+    return ret;
+}
 
 inline void debug_break(void) { __asm__ __volatile__ ("bkpt #0"); }
 

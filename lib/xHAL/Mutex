@@ -17,9 +17,26 @@ public:
 
     Mutex(bool recursive = false);
 
-    bool lock(const u32 blockTime = 1 * configTICK_RATE_HZ);
+    bool lock(const u32 deadline = getDeadline());
 
     bool unlock();
+};
+
+class AutoLock {
+    Mutex &mutex;
+    bool success;
+
+public:
+    AutoLock(Mutex &m, u32 deadline = getDeadline()) : mutex(m) {
+        success = (mutex.lock(deadline) == pdTRUE);
+    }
+
+    bool successful() { return success; }
+
+    ~AutoLock() {
+        if (success && !mutex.unlock())
+            FailAndInfiniteLoop();
+    }
 };
 
 }

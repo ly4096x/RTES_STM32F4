@@ -1,4 +1,5 @@
 #include <xHAL/SerialDevice>
+#include <xHAL/ThreadUtils>
 #include <cstring>
 
 namespace xHAL {
@@ -12,20 +13,20 @@ SerialDevice::SerialDevice(const TaskNotificationIds _txNotifyId, const TaskNoti
         rxEcho(0)
 {}
 
-u32 SerialDevice::writeCharToBulk(char c, bool flush, u32 timeout) {
+u32 SerialDevice::writeCharToBulk(char c, bool flush, u32 deadline) {
     static char txbuf[64], *txbuf_end = txbuf;
     if (!(c == 0 && flush))
         *txbuf_end++ = c;
     if (txbuf_end == txbuf + sizeof(txbuf) || c == '\n' || flush) {
-        write((u8 *)txbuf, txbuf_end - txbuf, timeout);
+        write((u8 *)txbuf, txbuf_end - txbuf, deadline);
         txbuf_end = txbuf;
     }
     return 1;
 }
 
-u32 SerialDevice::writeToBulk(char *data, u32 len, u32 timeout) {
+u32 SerialDevice::writeToBulk(char *data, u32 len, u32 deadline) {
     while (len--)
-        writeCharToBulk(*data++, timeout);
+        writeCharToBulk(*data++, false, deadline);
     return len;
 }
 
@@ -33,45 +34,43 @@ u32 SerialDevice::printf(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
-    if (!txMutex.lock()) return 0;
+    AutoLock lock(txMutex);
+    if (!lock.successful()) return 0;
+
     u32 len = _vprintf(fmt, args);
     writeCharToBulk(0, 1);
-    txMutex.unlock();
 
     va_end(args);
     return len;
 }
 
-char SerialDevice::getChar(u32 timeout) {
+char SerialDevice::getChar(u32 deadline) {
     char ret;
-    ret = peekChar(timeout);
+    ret = peekChar(deadline);
     if (rxEcho) {
-        writeCharToBulk(ret, true, timeout);
+        writeCharToBulk(ret, true, deadline);
     }
     ++rxbuf_begin;
     if (rxbuf_begin == rxbuf + sizeof(rxbuf))
         rxbuf_begin = rxbuf;
     return ret;
 }
-char SerialDevice::peekChar(u32 timeout) {
+char SerialDevice::peekChar(u32 deadline) {
     if (rxbuf_begin == rxbuf_end) {
         rxCaller = xTaskGetCurrentTaskHandle();
-        u32 notifiedValue = INVALID_NOTIFY_VALUE;
-        while (notifiedValue != rxNotifyId) {
-            if (!xTaskNotifyWait(0, 0, &notifiedValue, timeout))
-                FailAndInfiniteLoop();
-        }
+        waitForNotification(rxNotifyId, deadline);
     }
     return *rxbuf_begin;
 }
 
-u32 SerialDevice::readline(char *_dst, const u32 maxLength, u32 timeout) {
-    if (!rxMutex.lock(timeout)) return 0;
+u32 SerialDevice::readline(char *_dst, const u32 maxLength, u32 deadline) {
+    AutoLock lock(txMutex, deadline);
+    if (!lock.successful()) return 0;
 
     const char *dst = _dst;
     char *dst_end = _dst;
     while (dst_end - dst != maxLength - 1) {
-        *dst_end = getChar(timeout);
+        *dst_end = getChar(portMAX_DELAY);
         if (*dst_end == 0x0c && dst_end > dst) {
             --dst_end;
             continue;
@@ -82,12 +81,11 @@ u32 SerialDevice::readline(char *_dst, const u32 maxLength, u32 timeout) {
 
     int retlen = dst_end - _dst;
     if (*dst_end != '\n') {
-        while (getChar(timeout) != '\n');
+        while (getChar(portMAX_DELAY) != '\n');
         const char *msg = "rx_overflow";
         strcpy(_dst, msg);
         retlen = strlen(msg);
     }
-    rxMutex.unlock();
     
     *dst_end = 0;
     return retlen;

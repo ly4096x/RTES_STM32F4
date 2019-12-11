@@ -1,4 +1,5 @@
 #include <xHAL/DMA>
+#include <xHAL/ThreadUtils>
 
 namespace xHAL {
 
@@ -20,20 +21,13 @@ void DMA::startTransmit(u8 *from, u32 len) {
     LL_DMA_EnableStream(dma_dev, dma_channel);
 }
 
-u32 DMA::waitForComplete(u32 timeout) {
-    u32 notifiedValue = INVALID_NOTIFY_VALUE;
-    while (notifiedValue != notifyId) {
-        if (!xTaskNotifyWait(0, 0, &notifiedValue, timeout))
-            FailAndInfiniteLoop();
-    }
-    return notifiedValue;
+void DMA::waitForComplete(u32 deadline) {
+    waitForNotification(notifyId, deadline);
 }
 
 void DMA::interruptHandler(const bool TC, const bool TE) {
     if (TC) {
-        BaseType_t shouldYield;
-        xTaskNotifyFromISR(caller, notifyId, eSetValueWithOverwrite, &shouldYield);
-        portYIELD_FROM_ISR(shouldYield);
+        notifyThread(caller, notifyId);
     }
     if (TE) {
         FailAndInfiniteLoop();

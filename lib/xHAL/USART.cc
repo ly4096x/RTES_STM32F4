@@ -1,4 +1,5 @@
 #include "xHAL/USART"
+#include <xHAL/ThreadUtils>
 
 namespace xHAL {
 
@@ -11,40 +12,40 @@ USART::USART(USART_TypeDef *dev, DMA *dmaTx, const TaskNotificationIds _txNotify
         LL_USART_EnableIT_RXNE(dev);
 }
 
-u32 USART::writeWithPolling(u8 *data, u32 len, u32 timeout) {
-    if (len == 0 || !txMutex.lock(timeout)) return 0;
+u32 USART::writeWithPolling(u8 *data, u32 len, u32 deadline) {
+    if (len == 0) return 0;
+    AutoLock lock(txMutex, deadline);
+    if (!lock.successful()) return 0;
+    
     for (const auto e = data + len; data != e; ++data) {
-        while (!LL_USART_IsActiveFlag_TXE(dev));
+        while (!LL_USART_IsActiveFlag_TXE(dev))
+            if ((i32)deadline - (i32)getSysTickCount() < 0) FailAndInfiniteLoop();
         LL_USART_TransmitData8(dev, *data & 0xFF);
     }
-    txMutex.unlock();
     return len;
 }
-u32 USART::writeWithInterrupt(u8 *data, u32 len, u32 timeout) {
-    if (len == 0 || !txMutex.lock(timeout)) return 0;
+u32 USART::writeWithInterrupt(u8 *data, u32 len, u32 deadline) {
+    if (len == 0) return 0;
+    AutoLock lock(txMutex, deadline);
+    if (!lock.successful()) return 0;
+
     tx_data_begin = data;
     tx_data_end = data + len;
 
     txCaller = xTaskGetCurrentTaskHandle();
     LL_USART_EnableIT_TXE(dev);
-    
-    u32 notifiedValue = INVALID_NOTIFY_VALUE;
-    while (notifiedValue != txNotifyId) {
-        if (!xTaskNotifyWait(0, 0, &notifiedValue, timeout))
-            FailAndInfiniteLoop();
-    }
-    txMutex.unlock();
+    waitForNotification(txNotifyId, deadline);
     return len;
 }
-u32 USART::writeWithDma(u8 *data, u32 len, u32 timeout) {
-    if (len == 0 || !txMutex.lock(timeout)) return 0;
-    txCaller = xTaskGetCurrentTaskHandle();
-    //LL_USART_ClearFlag_TC(dev);
+u32 USART::writeWithDma(u8 *data, u32 len, u32 deadline) {
+    if (len == 0) return 0;
+    AutoLock lock(txMutex, deadline);
+    if (!lock.successful()) return 0;
+
     dmaTx->startTransmit(data, len);
     LL_USART_EnableDMAReq_TX(dev);
-    dmaTx->waitForComplete(timeout);
+    dmaTx->waitForComplete(deadline);
     LL_USART_DisableDMAReq_TX(dev);
-    txMutex.unlock();
     return len;
 }
 
@@ -54,9 +55,7 @@ void USART::txInterruptHandler() {
         LL_USART_TransmitData8(dev, *(tx_data_begin++) & 0xFF);
         return;
     }
-    BaseType_t shouldYield;
-    xTaskNotifyFromISR(txCaller, txNotifyId, eSetValueWithOverwrite, &shouldYield);
-    portYIELD_FROM_ISR(shouldYield);
+    notifyThread(txCaller, txNotifyId);
     LL_USART_DisableIT_TXE(dev);
 }
 
@@ -67,9 +66,7 @@ void USART::rxInterruptHandler() {
         overflow = 1;
     if (*rxbuf_end == '\r') return;
     if (*rxbuf_end == '\n' || *rxbuf_end == 0x03 || overflow || rxEcho) { // newline or ctrl-c or overflow
-        BaseType_t shouldYield;
-        xTaskNotifyFromISR(rxCaller, rxNotifyId, eSetValueWithOverwrite, &shouldYield);
-        portYIELD_FROM_ISR(shouldYield);
+        notifyThread(rxCaller, rxNotifyId);
     }
     if (overflow) return;
     ++rxbuf_end;

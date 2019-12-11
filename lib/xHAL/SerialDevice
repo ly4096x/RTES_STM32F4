@@ -25,17 +25,17 @@ protected:
     u8 *rxbuf_begin, *rxbuf_end;
     bool rxEcho;
 
-    u32 writeToBulk(char *data, u32 len, u32 timeout = 1 * configTICK_RATE_HZ);
-    u32 writeCharToBulk(char c, bool flush = false, u32 timeout = 1 * configTICK_RATE_HZ);
+    u32 writeToBulk(char *data, u32 len, u32 deadline = getDeadline());
+    u32 writeCharToBulk(char c, bool flush = false, u32 deadline = getDeadline());
 
 public:
     SerialDevice(const TaskNotificationIds _txNotifyId = INVALID_NOTIFY_VALUE, const TaskNotificationIds _rxNotifyId = INVALID_NOTIFY_VALUE);
 
-    virtual u32 write(u8 *data, u32 len, u32 timeout = 1 * configTICK_RATE_HZ) = 0;
+    virtual u32 write(u8 *data, u32 len, u32 deadline = getDeadline()) = 0;
     u32 printf(const char *fmt, ...);
-    char getChar(u32 timeout = 1 * configTICK_RATE_HZ);
-    char peekChar(u32 timeout = 1 * configTICK_RATE_HZ);
-    u32 readline(char *dst, const u32 maxLength, u32 timeout = 1 * configTICK_RATE_HZ);
+    char getChar(u32 deadline);
+    char peekChar(u32 deadline);
+    u32 readline(char *dst, const u32 maxLength, u32 deadline = getDeadline());
     void setEcho(const bool shouldEcho) {
         rxEcho=shouldEcho;
     }

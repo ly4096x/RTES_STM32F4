@@ -1,0 +1,31 @@
+#pragma once
+#include "board_common.h"
+#include <FreeRTOS.h>
+#include <xHAL/Mutex>
+#include <TaskNotificationIds.h>
+#include <stm32f4xx_ll_i2c.h>
+
+namespace xHAL {
+
+class I2C {
+
+protected:
+    I2C_TypeDef *dev;
+    Mutex mutex;
+    TaskHandle_t caller;
+    const TaskNotificationIds notifyId;
+
+    u32 SR_Mask[2];
+
+    bool waitForFlag_SB(u32 deadline);
+
+public:
+    I2C(I2C_TypeDef *dev, const TaskNotificationIds _notifyId = INVALID_NOTIFY_VALUE);
+
+    u32 write(u8 slaveAddr, bool isRead, u8 *data, u32 len, u32 deadline = getDeadline());
+    u32 read(u8 slaveAddr, u8 *data, u32 len, u32 deadline = getDeadline());
+
+    void interruptHandler(const u8 type);
+};
+
+}

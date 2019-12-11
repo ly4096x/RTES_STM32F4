@@ -3,10 +3,12 @@ extern "C" {
 #include <task.h>
 #include <stm32f4xx_ll_dma.h>
 #include <stm32f4xx_ll_usart.h>
+#include <stm32f4xx_ll_i2c.h>
 #include "TaskNotificationIds.h"
 }
 #include "board_common.h"
 #include <xHAL/USART>
+#include <xHAL/I2C>
 #include <cstring>
 
 extern "C" {
@@ -146,9 +148,9 @@ void TIM1_TRG_COM_TIM11_IRQHandler     () { DefaultHardwareExceptionHandler(__fu
 void TIM1_CC_IRQHandler                () { DefaultHardwareExceptionHandler(__func__); }
 void TIM2_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
 void TIM3_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
-void TIM4_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
-void I2C1_EV_IRQHandler                () { DefaultHardwareExceptionHandler(__func__); }
-void I2C1_ER_IRQHandler                () { DefaultHardwareExceptionHandler(__func__); }
+void TIM4_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); } //\
+void I2C1_EV_IRQHandler                () { DefaultHardwareExceptionHandler(__func__); } // I2C1 \
+void I2C1_ER_IRQHandler                () { DefaultHardwareExceptionHandler(__func__); } // I2C1
 void I2C2_EV_IRQHandler                () { DefaultHardwareExceptionHandler(__func__); }
 void I2C2_ER_IRQHandler                () { DefaultHardwareExceptionHandler(__func__); }
 void SPI1_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
@@ -247,4 +249,12 @@ void USART1_IRQHandler(void) {
         return;
     }
     FailAndInfiniteLoop();
+}
+
+void I2C1_EV_IRQHandler() {
+    extern xHAL::I2C xI2C1;
+}
+void I2C1_ER_IRQHandler() {
+    extern xHAL::I2C xI2C1;
+
 }
