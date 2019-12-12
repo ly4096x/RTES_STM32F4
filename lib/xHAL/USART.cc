@@ -3,12 +3,12 @@
 
 namespace xHAL {
 
-USART::USART(USART_TypeDef *dev, DMA *dmaTx, const TaskNotificationIds _txNotifyId, const TaskNotificationIds _rxNotifyId) :
+USART::USART(USART_TypeDef *dev, DMA *dmaTx, const TaskNotificationId _txNotifyId, const TaskNotificationId _rxNotifyId) :
         SerialDevice(_txNotifyId, _rxNotifyId),
         dev(dev),
         dmaTx(dmaTx)
 {
-    if (rxNotifyId != INVALID_NOTIFY_VALUE)
+    if (rxNotifyId != NOTIFY_INVALID_VALUE)
         LL_USART_EnableIT_RXNE(dev);
 }
 

@@ -17,7 +17,7 @@ class USART : public SerialDevice {
     u8 *tx_data_begin, *tx_data_end;
 
 public:
-    USART(USART_TypeDef *dev, DMA *dmaTx = nullptr, const TaskNotificationIds _txNotifyId = INVALID_NOTIFY_VALUE, const TaskNotificationIds _rxNotifyId = INVALID_NOTIFY_VALUE);
+    USART(USART_TypeDef *dev, DMA *dmaTx = nullptr, const TaskNotificationId _txNotifyId = NOTIFY_INVALID_VALUE, const TaskNotificationId _rxNotifyId = NOTIFY_INVALID_VALUE);
 
     u32 write(u8 *data, u32 len, u32 deadline = getDeadline()) {
         return isInISR() ?

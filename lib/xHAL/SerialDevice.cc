@@ -4,7 +4,7 @@
 
 namespace xHAL {
 
-SerialDevice::SerialDevice(const TaskNotificationIds _txNotifyId, const TaskNotificationIds _rxNotifyId) :
+SerialDevice::SerialDevice(const TaskNotificationId _txNotifyId, const TaskNotificationId _rxNotifyId) :
         txMutex(true),
         txNotifyId(_txNotifyId),
         rxNotifyId(_rxNotifyId),

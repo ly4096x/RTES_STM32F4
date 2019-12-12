@@ -16,7 +16,7 @@ public:
     Shell(ShellCommand *cmds);
 
     void run();
-    int handleCommand(char *line);
+    int handleCommand(char *line, const u32 lineLen);
 };
 
 }

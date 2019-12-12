@@ -14,11 +14,11 @@ bool Mutex::lock(const u32 deadline) {
     if (isInISR()) {
         ret = xSemaphoreTakeFromISR(&mutex, (BaseType_t *)&shouldYield);
         portYIELD_FROM_ISR(shouldYield);
-        holder = nullptr;
+        //holder = nullptr;
     } else {
         u32 timeout = getTimeout(deadline);
         ret = recursive ? xSemaphoreTakeRecursive(&mutex, timeout) : xSemaphoreTake(&mutex, timeout);
-        holder = xTaskGetCurrentTaskHandle();
+        //holder = xTaskGetCurrentTaskHandle();
     }
     return ret;
 }
@@ -31,7 +31,7 @@ bool Mutex::unlock() {
     } else {
         ret = recursive ? xSemaphoreGiveRecursive(&mutex) : xSemaphoreGive(&mutex);
     }
-    holder = nullptr;
+    //holder = nullptr;
     return ret;
 }
 

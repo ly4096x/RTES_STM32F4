@@ -19,7 +19,7 @@ class SerialDevice {
 protected:
     Mutex txMutex, rxMutex;
     TaskHandle_t txCaller, rxCaller;
-    const TaskNotificationIds txNotifyId, rxNotifyId;
+    const TaskNotificationId txNotifyId, rxNotifyId;
 
     u8 rxbuf[64];
     char txbuf[64], *txbuf_end;
@@ -30,7 +30,7 @@ protected:
     u32 writeCharToBulk(char c, bool flush = false, u32 deadline = getDeadline());
 
 public:
-    SerialDevice(const TaskNotificationIds _txNotifyId = INVALID_NOTIFY_VALUE, const TaskNotificationIds _rxNotifyId = INVALID_NOTIFY_VALUE);
+    SerialDevice(const TaskNotificationId _txNotifyId = NOTIFY_INVALID_VALUE, const TaskNotificationId _rxNotifyId = NOTIFY_INVALID_VALUE);
 
     virtual u32 write(u8 *data, u32 len, u32 deadline = getDeadline()) = 0;
     u32 printf(const char *fmt, ...);

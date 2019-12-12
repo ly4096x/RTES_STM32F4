@@ -253,8 +253,9 @@ void USART1_IRQHandler(void) {
 
 void I2C1_EV_IRQHandler() {
     extern xHAL::I2C xI2C1;
+    xI2C1.interruptHandler(0);
 }
 void I2C1_ER_IRQHandler() {
     extern xHAL::I2C xI2C1;
-
+    xI2C1.interruptHandler(1);
 }

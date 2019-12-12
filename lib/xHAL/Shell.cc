@@ -4,6 +4,7 @@
 #include <task.h>
 #include <cstring>
 #include <cinttypes>
+#include <cctype>
 
 extern xHAL::USART console;
 
@@ -26,17 +27,17 @@ void Shell::run() {
     while (1) {
         console.printf(">>> ");
         u32 len = console.readline(line, sizeof(line));
-        handleCommand(line);
+        handleCommand(line, len);
         console.printf("[%s] STACK_UNUSED = %10" PRIu32 "\n",
                 pcTaskGetName(xTaskGetCurrentTaskHandle()), uxTaskGetStackHighWaterMark(xTaskGetCurrentTaskHandle()));
     }
 }
 
-int Shell::handleCommand(char *line) {
+int Shell::handleCommand(char *line, const u32 lineLen) {
     if (!*line) return 0;
 
     char *argv0_begin = line;
-    while (*argv0_begin == ' ' || *argv0_begin == '\n' || *argv0_begin == '\t') // remove extra spaces
+    while (isspace(*argv0_begin)) // remove extra spaces
         ++argv0_begin;
     char *argv0_end = argv0_begin;
     while (*argv0_end && *argv0_end != ' ')

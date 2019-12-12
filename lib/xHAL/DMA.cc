@@ -3,7 +3,7 @@
 
 namespace xHAL {
 
-DMA::DMA(DMA_TypeDef *dev, u32 channel, const TaskNotificationIds _notifyId) :
+DMA::DMA(DMA_TypeDef *dev, u32 channel, const TaskNotificationId _notifyId) :
         dma_dev(dev),
         dma_channel(channel),
         notifyId(_notifyId)

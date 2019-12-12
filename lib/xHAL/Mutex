@@ -13,7 +13,7 @@ class Mutex {
     bool recursive;
 
 public:
-    TaskHandle_t holder;
+    //TaskHandle_t holder;
 
     Mutex(bool recursive = false);
 

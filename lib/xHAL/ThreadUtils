@@ -6,7 +6,7 @@
 
 namespace xHAL {
 
-void waitForNotification(const TaskNotificationIds expectedNotifyId, u32 deadline = getDeadline(), bool waitForever = false);
-void notifyThread(TaskHandle_t &caller, const TaskNotificationIds notifyId);
+void waitForNotification(const TaskNotificationId expectedNotifyId, u32 deadline = getDeadline(), bool waitForever = false);
+void notifyThread(TaskHandle_t &caller, const TaskNotificationId notifyId);
 
 }

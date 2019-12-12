@@ -8,24 +8,39 @@
 namespace xHAL {
 
 class I2C {
-
 protected:
     I2C_TypeDef *dev;
     Mutex mutex;
     TaskHandle_t caller;
-    const TaskNotificationIds notifyId;
+    const TaskNotificationId notifyId;
 
-    u32 SR_Mask[2];
+    enum I2C_State : u8 {
+        STATE_STOPPED,
+        STATE_WAITING_START,
+        STATE_WAITING_ADDR,
+        STATE_WAITING_TXE,
+        STATE_WAITING_RXNE,
+        STATE_ERROR
+    } state;
 
-    bool waitForFlag_SB(u32 deadline);
+    struct {
+        u8 addr;
+        u8 *data;
+        u8 *data_ptr;
+        u16 len;
+        bool isRead;
+        bool genStop;
+    } cmd;
+
+    bool isError();
+    void clearInterruptFlags();
 
 public:
-    I2C(I2C_TypeDef *dev, const TaskNotificationIds _notifyId = INVALID_NOTIFY_VALUE);
+    I2C(I2C_TypeDef *dev, const TaskNotificationId _notifyId = NOTIFY_INVALID_VALUE);
 
-    u32 write(u8 slaveAddr, bool isRead, u8 *data, u32 len, u32 deadline = getDeadline());
-    u32 read(u8 slaveAddr, u8 *data, u32 len, u32 deadline = getDeadline());
+    u16 startTransaction(u8 slaveAddr, bool isRead, u8 *data, u16 len, bool genStop, u32 deadline = getDeadline());
 
-    void interruptHandler(const u8 type);
+    void interruptHandler(bool err);
 };
 
 }
