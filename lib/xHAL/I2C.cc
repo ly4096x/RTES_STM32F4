@@ -4,6 +4,12 @@
 
 extern xHAL::USART console;
 
+#if LOG_I2C_EMPTY_INT
+int i2c_did_nothing = 0;
+constexpr int i2c_did_nothing_maxlen = 32;
+u32 i2c_nothing_buf[i2c_did_nothing_maxlen];
+#endif
+
 namespace xHAL {
 
 I2C::I2C(I2C_TypeDef *dev, const TaskNotificationId _notifyId) :
@@ -70,6 +76,9 @@ void I2C::interruptHandler(bool err) {
             cmd.data_ptr = cmd.data;
             state = STATE_WAITING_ADDR;
         }
+#if LOG_I2C_EMPTY_INT
+        if (i2c_did_nothing != i2c_did_nothing_maxlen) i2c_nothing_buf[i2c_did_nothing++] = dev->SR1;
+#endif
         return;
     case STATE_WAITING_ADDR:
         if (LL_I2C_IsActiveFlag_ADDR(dev)) {
@@ -89,6 +98,9 @@ void I2C::interruptHandler(bool err) {
             }
             LL_I2C_EnableIT_BUF(dev);
         }
+#if LOG_I2C_EMPTY_INT
+        if (i2c_did_nothing != i2c_did_nothing_maxlen) i2c_nothing_buf[i2c_did_nothing++] = dev->SR1;
+#endif
         return;
     case STATE_WAITING_TXE:
         if (LL_I2C_IsActiveFlag_TXE(dev)) {
@@ -99,6 +111,9 @@ void I2C::interruptHandler(bool err) {
                 notifyThread(caller, notifyId);
             }
         }
+#if LOG_I2C_EMPTY_INT
+        if (i2c_did_nothing != i2c_did_nothing_maxlen) i2c_nothing_buf[i2c_did_nothing++] = dev->SR1;
+#endif
         return;
     case STATE_WAITING_RXNE:
         if (LL_I2C_IsActiveFlag_RXNE(dev)) {
@@ -111,6 +126,9 @@ void I2C::interruptHandler(bool err) {
                 notifyThread(caller, notifyId);
             }
         }
+#if LOG_I2C_EMPTY_INT
+        if (i2c_did_nothing != i2c_did_nothing_maxlen) i2c_nothing_buf[i2c_did_nothing++] = dev->SR1;
+#endif
         return;
     default:
         debug_break();

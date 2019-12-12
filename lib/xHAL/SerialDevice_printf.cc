@@ -109,19 +109,19 @@ size_t SerialDevice::_out_rev(const char *buf, size_t len, unsigned int width, u
     // pad spaces up to given width
     if (!(flags & FLAGS_LEFT) && !(flags & FLAGS_ZEROPAD)) {
         for (size_t i = len; i < width; i++) {
-            idx += writeCharToBulk(' ');
+            idx += writeCharToTxBuffer(' ');
         }
     }
 
     // reverse string
     while (len) {
-        idx += writeCharToBulk(buf[--len]);
+        idx += writeCharToTxBuffer(buf[--len]);
     }
 
     // append pad spaces up to given width
     if (flags & FLAGS_LEFT) {
         while (idx < width) {
-            idx += writeCharToBulk(' ');
+            idx += writeCharToTxBuffer(' ');
         }
     }
 
@@ -464,13 +464,13 @@ size_t SerialDevice::_etoa(double value, unsigned int prec, unsigned int width, 
   // output the exponent part
   if (minwidth) {
     // output the exponential symbol
-    idx += writeCharToBulk((flags & FLAGS_UPPERCASE) ? 'E' : 'e');
+    idx += writeCharToTxBuffer((flags & FLAGS_UPPERCASE) ? 'E' : 'e');
     // output the exponent value
     idx += _ntoa_long((expval < 0) ? -expval : expval, expval < 0, 10, 0, minwidth-1, FLAGS_ZEROPAD | FLAGS_PLUS);
     // might need to right-pad spaces
     if (flags & FLAGS_LEFT) {
       while (idx < width)
-        idx += writeCharToBulk(' ');
+        idx += writeCharToTxBuffer(' ');
     }
   }
   return idx;
@@ -486,7 +486,7 @@ size_t SerialDevice::_vprintf(const char *format, va_list va) {
         // format specifier?  %[flags][width][.precision][length]
         if (*format != '%') {
             // no
-            idx += writeCharToBulk(*format);
+            idx += writeCharToTxBuffer(*format);
             format++;
             continue;
         } else {
@@ -703,15 +703,15 @@ size_t SerialDevice::_vprintf(const char *format, va_list va) {
             // pre padding
             if (!(flags & FLAGS_LEFT)) {
                 while (l++ < width) {
-                    idx += writeCharToBulk(' ');
+                    idx += writeCharToTxBuffer(' ');
                 }
             }
             // char output
-            idx += writeCharToBulk((char)va_arg(va, int));
+            idx += writeCharToTxBuffer((char)va_arg(va, int));
             // post padding
             if (flags & FLAGS_LEFT) {
                 while (l++ < width) {
-                    idx += writeCharToBulk(' ');
+                    idx += writeCharToTxBuffer(' ');
                 }
             }
             format++;
@@ -727,17 +727,17 @@ size_t SerialDevice::_vprintf(const char *format, va_list va) {
             }
             if (!(flags & FLAGS_LEFT)) {
                 while (l++ < width) {
-                    idx += writeCharToBulk(' ');
+                    idx += writeCharToTxBuffer(' ');
                 }
             }
             // string output
             while ((*p != 0) && (!(flags & FLAGS_PRECISION) || precision--)) {
-                idx += writeCharToBulk(*(p++));
+                idx += writeCharToTxBuffer(*(p++));
             }
             // post padding
             if (flags & FLAGS_LEFT) {
                 while (l++ < width) {
-                    idx += writeCharToBulk(' ');
+                    idx += writeCharToTxBuffer(' ');
                 }
             }
             format++;
@@ -765,12 +765,12 @@ size_t SerialDevice::_vprintf(const char *format, va_list va) {
         }
 
         case '%':
-            idx += writeCharToBulk('%');
+            idx += writeCharToTxBuffer('%');
             format++;
             break;
 
         default:
-            idx += writeCharToBulk(*format);
+            idx += writeCharToTxBuffer(*format);
             format++;
             break;
         }

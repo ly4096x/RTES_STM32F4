@@ -15,7 +15,7 @@ SerialDevice::SerialDevice(const TaskNotificationId _txNotifyId, const TaskNotif
     txbuf_end = txbuf;
 }
 
-u32 SerialDevice::writeCharToBulk(char c, bool flush, u32 deadline) {
+u32 SerialDevice::writeCharToTxBuffer(char c, bool flush, u32 deadline) {
     AutoLock lock(txMutex, deadline);
     if (!lock.successful()) return 0;
 
@@ -28,9 +28,9 @@ u32 SerialDevice::writeCharToBulk(char c, bool flush, u32 deadline) {
     return 1;
 }
 
-u32 SerialDevice::writeToBulk(char *data, u32 len, u32 deadline) {
+u32 SerialDevice::writeToTxBuffer(char *data, u32 len, u32 deadline) {
     while (len--)
-        writeCharToBulk(*data++, false, deadline);
+        writeCharToTxBuffer(*data++, false, deadline);
     return len;
 }
 
@@ -42,18 +42,24 @@ u32 SerialDevice::printf(const char *fmt, ...) {
     if (!lock.successful()) return 0;
 
     u32 len = _vprintf(fmt, args);
-    writeCharToBulk(0, 1);
+    writeCharToTxBuffer(0, 1);
 
     va_end(args);
     return len;
 }
 
-char SerialDevice::getChar(u32 deadline, bool waitForever) {
-    u32 timeout = getTimeout(deadline);
+char SerialDevice::getChar(u32 timeout, bool doNotEchoIfBackspace, bool waitForever) {
     char ret;
-    ret = peekChar(deadline, waitForever);
+    ret = peekChar(getDeadline(timeout), waitForever);
     if (rxEcho) {
-        writeCharToBulk(ret, true, waitForever ? getDeadline(timeout) : deadline);
+        u32 echoDeadline = getDeadline(timeout);
+        if (ret == '\b') {
+            if (!doNotEchoIfBackspace) {
+                writeToTxBuffer("\b \b", 3, echoDeadline);
+                writeCharToTxBuffer(0, true, echoDeadline); // flush
+            }
+        } else
+            writeCharToTxBuffer(ret, true, echoDeadline);
     }
     ++rxbuf_begin;
     if (rxbuf_begin == rxbuf + sizeof(rxbuf))
@@ -72,12 +78,15 @@ u32 SerialDevice::readline(char *_dst, const u32 maxLength, u32 deadline, bool w
     AutoLock lock(rxMutex, deadline);
     if (!lock.successful()) return 0;
 
+    u32 echoTimeout = getTimeout(deadline);
+
     const char *dst = _dst;
     char *dst_end = _dst;
-    while (dst_end - dst != maxLength - 1) {
-        *dst_end = getChar(deadline, waitForever);
-        if (*dst_end == 0x0c && dst_end > dst) {
-            --dst_end;
+    while ((u32)(dst_end - dst) != maxLength - 1) {
+        *dst_end = getChar(echoTimeout, dst_end == dst, waitForever);
+        if (*dst_end == '\b') {
+            if (dst_end != dst)
+                --dst_end;
             continue;
         }
         if (*dst_end == '\n') break;
@@ -86,7 +95,7 @@ u32 SerialDevice::readline(char *_dst, const u32 maxLength, u32 deadline, bool w
 
     int retlen = dst_end - _dst;
     if (*dst_end != '\n') {
-        while (getChar(deadline, waitForever) != '\n');
+        while (getChar(echoTimeout, true, waitForever) != '\n');
         const char *msg = "rx_overflow";
         strcpy(_dst, msg);
         retlen = strlen(msg);

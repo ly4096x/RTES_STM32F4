@@ -5,6 +5,8 @@
 #include <TaskNotificationIds.h>
 #include <stm32f4xx_ll_i2c.h>
 
+#define LOG_I2C_EMPTY_INT 0
+
 namespace xHAL {
 
 class I2C {

@@ -11,6 +11,7 @@ void waitForNotification(const TaskNotificationId expectedNotifyId, u32 deadline
     }
 #else // disabled since this workaround (setting caller to NULL after notifying) seems pretty good.
     // This is trying to solve one task being notified multiple times and all previous unmatching notifications got lost
+    
     // only partly solved since the following implementation allow only one unmatching notification to be forwarded
     u32 notifiedValue = NOTIFY_INVALID_VALUE;
     u32 pending = NOTIFY_INVALID_VALUE;
@@ -24,7 +25,7 @@ void waitForNotification(const TaskNotificationId expectedNotifyId, u32 deadline
     }
     auto caller = xTaskGetCurrentTaskHandle();
     if (pending != NOTIFY_INVALID_VALUE)
-        notifyThread(caller, (TaskNotificationIds)pending);
+        notifyThread(caller, (TaskNotificationId)pending);
 #endif
 }
 

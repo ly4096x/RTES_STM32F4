@@ -22,13 +22,17 @@ Shell::Shell(ShellCommand *cmds) :
 
 void Shell::run() {
     char line[64];
-    console.write((u8*)"\n", 1);
     console.setEcho(true);
+    u32 timerValue;
     while (1) {
-        console.printf(">>> ");
+        console.printf("\n>>> ");
         u32 len = console.readline(line, sizeof(line));
-        handleCommand(line, len);
-        console.printf("[%s] STACK_UNUSED = %10" PRIu32 "\n",
+        if (len && line[len - 1] != 0x03) { // ctrl-c
+            timerValue = get_cycle_counter_value();
+            handleCommand(line, len);
+            console.printf("\nexec time: %.3fms\n", (get_cycle_counter_value() - timerValue) / (SystemCoreClock / 1000.f));
+        }
+        console.printf("[%s] STACK_UNUSED = %10" PRIu32,
                 pcTaskGetName(xTaskGetCurrentTaskHandle()), uxTaskGetStackHighWaterMark(xTaskGetCurrentTaskHandle()));
     }
 }
