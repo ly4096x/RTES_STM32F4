@@ -32,7 +32,6 @@ extern "C"
 int main(void) {
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
-
     NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
     NVIC_SetPriority(PendSV_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 15, 0));
     NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 15, 0));
@@ -40,19 +39,18 @@ int main(void) {
     SystemClock_Config();
     extern uint32_t SystemCoreClock;
     LL_InitTick(SystemCoreClock, 100);
-
+    enable_cycle_counter();
 
     LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_0);
-    MX_DMA_Init();
     MX_GPIO_Init();
+    MX_DMA_Init();
     MX_I2C1_Init();
     MX_TIM14_Init();
     MX_USART1_UART_Init();
     LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_7, LL_USART_DMA_GetRegAddr(USART1));
+
     LL_GPIO_ResetOutputPin(GPIOE, LL_GPIO_PIN_1);
     delay_micros(100000);
-
-    enable_cycle_counter();
 
     u32 deadline = get_cycle_counter_value() + SystemCoreClock / 1000 * 100;
     while (LL_USART_IsActiveFlag_RXNE(USART1) && get_cycle_counter_value() < deadline)
