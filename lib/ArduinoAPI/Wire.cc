@@ -7,6 +7,8 @@ extern "C" {
 }
 
 #include "Wire.h"
+#include <xHAL/I2C>
+extern xHAL::I2C xI2C1;
 
 // Initialize Class Variables //////////////////////////////////////////////////
 
@@ -82,7 +84,8 @@ uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint32_t iaddres
   // perform blocking read into buffer
   //uint8_t read = twi_readFrom(address, rxBuffer, quantity, sendStop);
   //LL_I2C_Enable(I2C1);
-  LL_I2C_GenerateStartCondition(I2C1);
+  auto ret = xI2C1.startTransaction(address, true, rxBuffer, quantity, sendStop);
+  /*LL_I2C_GenerateStartCondition(I2C1);
   while (LL_I2C_IsActiveFlag_BUSY(I2C1) && !(LL_I2C_IsActiveFlag_MSL(I2C1) && LL_I2C_IsActiveFlag_SB(I2C1)));
   LL_I2C_TransmitData8(I2C1, (address << 1) | LL_I2C_DIRECTION_READ);
   while (!LL_I2C_IsActiveFlag_ADDR(I2C1));
@@ -95,13 +98,13 @@ uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint32_t iaddres
   if (sendStop) {
     LL_I2C_GenerateStopCondition(I2C1);
     LL_I2C_Disable(I2C1);
-  }
+  }*/
 
   // set rx buffer iterator vars
   rxBufferIndex = 0;
-  rxBufferLength = quantity;
+  rxBufferLength = ret;
 
-  return quantity;
+  return ret;
 }
 
 uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop) {
@@ -156,8 +159,8 @@ uint8_t TwoWire::endTransmission(uint8_t sendStop)
 {
   // transmit buffer (blocking)
   //uint8_t ret = twi_writeTo(txAddress, txBuffer, txBufferLength, 1, sendStop);
-  u8 ret = 0;
-  LL_I2C_Enable(I2C1);
+  u16 ret = 0;
+  /*LL_I2C_Enable(I2C1);
   while (!LL_I2C_IsEnabled(I2C1));
   LL_I2C_GenerateStartCondition(I2C1);
   while (!LL_I2C_IsActiveFlag_SB(I2C1));
@@ -176,7 +179,9 @@ uint8_t TwoWire::endTransmission(uint8_t sendStop)
   if (sendStop) {
     LL_I2C_GenerateStopCondition(I2C1);
     LL_I2C_Disable(I2C1);
-  }
+  }*/
+
+  ret = xI2C1.startTransaction(txAddress, false, txBuffer, txBufferLength, sendStop);
 
   // reset tx buffer iterator vars
   txBufferIndex = 0;
