@@ -13,27 +13,21 @@ extern "C" {
 extern xHAL::USART console;
 extern xHAL::I2C xI2C1;
 
-char *next_arg(char *&arg_start) {
-    while (isspace(*arg_start)) // remove extra spaces
-        ++arg_start;
-    char *arg_end = arg_start;
-    while (*arg_end && *arg_end != ' ')
-        ++arg_end;
-    return arg_end;
-}
+int i2c1_cmd_handler(const u8 argc, char **argv) {
+    if (argc < 5) { console.printf("too few args\n"); return 1; }
 
-int i2c1_cmd_handler(char *arg) {
-    char *arg_end = arg;
-    u8 addr = strtoul(arg, &arg, 0);
-    bool isRead = strtoul(arg, &arg, 0);
-    u16 len = strtoul(arg, &arg, 0);
-    bool genStop = strtoul(arg, &arg, 0);
+    u8 addr = strtoul(argv[1], nullptr, 0);
+    bool isRead = strtoul(argv[2], nullptr, 0);
+    u16 len = strtoul(argv[3], nullptr, 0);
+    bool genStop = strtoul(argv[4], nullptr, 0);
+
+    if (argc < 5 + len) { console.printf("too few data\n"); return 2; }
     
     u8 data[32];
-    arg_end = arg;
-    if (!isRead) for (i16 i=0; i!=len; ++i) {
-        arg = arg_end; arg_end = next_arg(arg); if (arg_end == arg) { console.printf("invalid format\n"); return 1; }
-        data[i] = strtoul(arg, nullptr, 0);
+    if (!isRead) {
+        for (i16 i=0; i!=len; ++i) {
+            data[i] = strtoul(argv[i + 5], nullptr, 0);
+        }
     }
     u16 processed = xI2C1.startTransaction(addr, isRead, data, len, genStop);
     console.printf("processed %d bytes\n", processed);
@@ -54,63 +48,74 @@ int i2c1_cmd_handler(char *arg) {
 }
 
 TaskHandle_t tasklist[8], *tasklistend = tasklist;
-int taskControl_cmd_handler(char *arg) {
-    char *arg_end = arg;
-    arg = arg_end; arg_end = next_arg(arg); if (arg_end == arg) { console.printf("invalid format\n"); return 1; }
-    char *argv1 = arg;
-    u16 arg1len = arg_end - arg;
-    arg = arg_end; arg_end = next_arg(arg); if (arg_end == arg) { console.printf("invalid format\n"); return 1; }
-    char *argv2 = arg;
-    u16 arg2len = arg_end - arg;
+int taskControl_cmd_handler(const u8 argc, char **argv) {
+    if (argc < 3) { console.printf("too few args\n"); return 1; }
+    const u8 argv1len = strlen(argv[1]), argv2len = strlen(argv[2]);
 
     TaskHandle_t targetTask = nullptr;
     for (TaskHandle_t *p = tasklist; p!=tasklistend; ++p){
         char *name = pcTaskGetName(*p);
-        if (strlen(name) == arg2len && strncmp(name, argv2, arg2len) == 0) {
+        if (strlen(name) == argv2len && strncmp(name, argv[2], argv2len) == 0) {
             targetTask = *p;
             break;
         }
     }
     if (!targetTask) {
-        console.printf("err: task \"%.*s\" does not exist\n", arg2len, argv2);
+        console.printf("err: task \"%.*s\" does not exist\n", argv2len, argv[2]);
         return 1;
     }
 
-    if (strlen("start") == arg1len && strncmp("start", argv1, arg1len) == 0) {
+    if (strlen("start") == argv1len && strncmp("start", argv[1], argv1len) == 0) {
         vTaskResume(targetTask);
-    } else if (strlen("pause") == arg1len && strncmp("pause", argv1, arg1len) == 0) {
+    } else if (strlen("pause") == argv1len && strncmp("pause", argv[1], argv1len) == 0) {
         vTaskSuspend(targetTask);
     } else {
-        console.printf("err: invalid command \"%.*s\"\n", arg1len, argv1);
+        console.printf("err: invalid command \"%.*s\"\n", argv1len, argv[2]);
         return 1;
     }
     return 0;
 }
 
-int setpwm_cmd_handler(char *arg) {
-    char *arg_end = arg;
-    arg = arg_end; arg_end = next_arg(arg); if (arg_end == arg) { console.printf("invalid format\n"); return 1; }
-    char *argv1 = arg;
-    u16 arg1len = arg_end - arg;
-    arg = arg_end; arg_end = next_arg(arg); if (arg_end == arg) { console.printf("invalid format\n"); return 1; }
-    char *argv2 = arg;
-    u16 arg2len = arg_end - arg;
+int setpwm_cmd_handler(const u8 argc, char **argv) {
+    if (argc < 3) { console.printf("too few args\n"); return 1; }
+    const u8 argv1len = strlen(argv[1]);
 
-    if (strlen("arr") == arg1len && strncmp("arr", argv1, arg1len) == 0) {
-        LL_TIM_SetAutoReload(TIM14, atoi(argv2));
-    } else if (strlen("val") == arg1len && strncmp("val", argv1, arg1len) == 0) {
-        LL_TIM_OC_SetCompareCH1(TIM14, atoi(argv2));
+    if (strlen("arr") == argv1len && strncmp("arr", argv[1], argv1len) == 0) {
+        LL_TIM_SetAutoReload(TIM14, atoi(argv[2]));
+    } else if (strlen("val") == argv1len && strncmp("val", argv[1], argv1len) == 0) {
+        LL_TIM_OC_SetCompareCH1(TIM14, atoi(argv[2]));
     } else {
-        console.printf("err: invalid command \"%.*s\"\n", arg1len, argv1);
+        console.printf("err: invalid command \"%.*s\"\n", argv1len, argv[1]);
         return 1;
     }
     return 0;
 }
+
+int mem_cmd_handler(const u8 argc, char **argv) {
+    if (argc < 3) { console.printf("too few args\n"); return 1; }
+    const u8 argv1len = strlen(argv[1]);
+    u32 val;
+
+    u32 *addr = (u32*)strtoul(argv[2], nullptr, 0);
+    if (!addr) { console.printf("invalid mem addr\n"); return 1; }
+
+    if (strlen("write") == argv1len && strncmp("write", argv[1], argv1len) == 0) {
+        if (argc < 4) { console.printf("too few args\n"); return 1; }
+        val = strtoul(argv[3], nullptr, 0);
+        *addr = val;
+    } else if (strlen("read") == argv1len && strncmp("read", argv[1], argv1len) == 0) {
+        val = *addr;
+        console.printf("val = 0x%08x\n", val);
+    }
+    return 0;
+}
+
 xHAL::ShellCommand cmds[] = {
-    {"hello", 0, [](char *)->int { console.printf("hello this is shell\n"); return 0; } },
-    {"rx_overflow", 0, [](char *)->int { console.printf("error: rx_overflow\n"); return 1; } },
-    {"i2c1", 0, &i2c1_cmd_handler},
-    {"task", 0, &taskControl_cmd_handler},
-    {"setpwm", 0, &setpwm_cmd_handler},
-    {nullptr, 0, nullptr}
+    {"hello", [](const u8 argc, char **argv)->int { console.printf("hello this is shell\n"); return 0; } },
+    {"rx_overflow", [](const u8 argc, char **argv)->int { console.printf("error: rx_overflow\n"); return 1; } },
+    {"i2c1", &i2c1_cmd_handler},
+    {"task", &taskControl_cmd_handler},
+    {"setpwm", &setpwm_cmd_handler},
+    {"mem", &mem_cmd_handler},
+    {nullptr, nullptr}
 };

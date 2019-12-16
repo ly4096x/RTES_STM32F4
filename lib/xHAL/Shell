@@ -3,14 +3,18 @@
 
 namespace xHAL {
 
+constexpr u8 SHELL_MAX_ARGC = 16;
+
 struct ShellCommand {
     char *cmd;
-    u8 len;
-    int (*func)(char *args);
+    int (*func)(u8 argc, char **argv);
 };
 
 class Shell {
     ShellCommand * const commandsList;
+    char *argv_list[SHELL_MAX_ARGC];
+    
+    const u8 parse_args(char *arg_start);
 
 public:
     Shell(ShellCommand *cmds);
