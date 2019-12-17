@@ -105,7 +105,7 @@ int mem_cmd_handler(const u8 argc, char **argv) {
         *addr = val;
     } else if (strlen("read") == argv1len && strncmp("read", argv[1], argv1len) == 0) {
         val = *addr;
-        console.printf("val = 0x%08x\n", val);
+        console.printf("val = 0x%08x %d\n", val, val);
     }
     return 0;
 }

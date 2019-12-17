@@ -29,8 +29,14 @@ const u8 Shell::parse_args(char *arg_start) {
     while (true) {
         arg_end = next_arg(arg_start);
         if (arg_start == arg_end) break;
-        *arg_end = '\0';
         *argv_ptr++ = arg_start;
+        if (argv_ptr - argv_list == SHELL_MAX_ARGC) {
+            argv_list[0] = "rx_overflow";
+            return 1;
+        }
+        if (!*arg_end) break;
+        *arg_end = '\0';
+        arg_start = arg_end + 1;
     }
     return argv_ptr - argv_list;
 }
@@ -40,12 +46,12 @@ void Shell::run() {
     console.setEcho(true);
     u32 timerValue;
     while (1) {
-        console.printf("\n>>> ");
+        console.printf(">>> ");
         u32 len = console.readline(line, sizeof(line));
-        if (len && line[len - 1] == '\0') { // maformed string
+        if (len && line[len] == '\0') { // maformed string
             timerValue = get_cycle_counter_value();
             handleCommand(line, len);
-            console.printf("\nexec time: %.3fms\n[%s] STACK_UNUSED = %10" PRIu32,
+            console.printf("\nexec time: %.3fms\n[%s] STACK_UNUSED = %10" PRIu32 "\n",
                 (get_cycle_counter_value() - timerValue) / (SystemCoreClock / 1000.f),
                 pcTaskGetName(xTaskGetCurrentTaskHandle()),
                 uxTaskGetStackHighWaterMark(xTaskGetCurrentTaskHandle())
