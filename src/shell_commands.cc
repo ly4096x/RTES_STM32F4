@@ -21,7 +21,7 @@ int i2c1_cmd_handler(const u8 argc, char **argv) {
     u16 len = strtoul(argv[3], nullptr, 0);
     bool genStop = strtoul(argv[4], nullptr, 0);
 
-    if (argc < 5 + len) { console.printf("too few data\n"); return 2; }
+    if (!isRead && argc < 5 + len) { console.printf("too few data\n"); return 2; }
     
     u8 data[32];
     if (!isRead) {
