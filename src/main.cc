@@ -20,6 +20,7 @@ extern "C" {
 void idle_thread(void *param);
 void main_thread(void *param);
 void servo_thread(void *param);
+extern void vlq_thread(void *param);
 
 xHAL::DMA console_uart_tx_dma(DMA2, LL_DMA_STREAM_7, NOTIFY_USART_CONSOLE_TX_DMA_TC);
 xHAL::USART console(USART1, &console_uart_tx_dma, NOTIFY_USART_CONSOLE_TXE, NOTIFY_USART_CONSOLE_RXNE);
@@ -43,6 +44,7 @@ int main(void) {
 
     LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_0);
     MX_GPIO_Init();
+    LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_0);
     MX_DMA_Init();
     MX_I2C1_Init();
     MX_TIM14_Init();
@@ -63,6 +65,7 @@ int main(void) {
     xTaskCreate(main_thread, "main", 256, nullptr, 10, tasklistend++);
     xTaskCreate(servo_thread, "servo", 256, nullptr, 30, tasklistend++);
     xTaskCreate([](void*) { shell.run(); }, "shell", 256, nullptr, 50, tasklistend++);
+    xTaskCreate(vlq_thread, "vlq", 256, nullptr, 20, tasklistend++);
 
     LL_GPIO_SetOutputPin(GPIOE, LL_GPIO_PIN_1);
 

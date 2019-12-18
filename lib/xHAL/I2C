@@ -22,6 +22,7 @@ protected:
         STATE_WAITING_ADDR,
         STATE_WAITING_TXE,
         STATE_WAITING_RXNE,
+        STATE_WAITING_TX_STOP,
         STATE_ERROR
     } state;
 

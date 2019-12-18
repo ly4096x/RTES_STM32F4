@@ -188,7 +188,7 @@ uint8_t TwoWire::endTransmission(uint8_t sendStop)
   txBufferLength = 0;
   // indicate that we are done transmitting
   transmitting = 0;
-  return ret;
+  return ret ? 0 : 4;
 }
 
 //	This provides backwards compatibility with the original

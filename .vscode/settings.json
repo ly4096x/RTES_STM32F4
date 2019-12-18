@@ -63,7 +63,17 @@
         "i2c": "cpp",
         "random": "cpp",
         "system_error": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "xstring": "cpp",
+        "*.tcc": "cpp",
+        "exception": "cpp",
+        "iosfwd": "cpp",
+        "new": "cpp"
     },
     "C_Cpp.configurationWarnings": "Disabled",
     "cmake.configureOnOpen": true

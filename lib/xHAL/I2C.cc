@@ -38,6 +38,7 @@ u16 I2C::startTransaction(u8 slaveAddr, bool isRead, u8 *data, u16 len, bool gen
     state = STATE_WAITING_START;
     LL_I2C_GenerateStartCondition(dev);
     LL_I2C_EnableIT_EVT(dev);
+    LL_I2C_EnableIT_ERR(dev);
     waitForNotification(notifyId, deadline);
 
     LL_I2C_DisableIT_EVT(dev);
@@ -70,7 +71,6 @@ void I2C::interruptHandler(bool err) {
 
     switch (state) {
     case STATE_WAITING_START:
-        console.printf("i2c sr1 = %08x\n", dev->SR1);
         if (LL_I2C_IsActiveFlag_SB(dev)) {
             LL_I2C_TransmitData8(dev, (cmd.addr << 1) | (cmd.isRead & 1));
             cmd.data_ptr = cmd.data;
@@ -106,10 +106,20 @@ void I2C::interruptHandler(bool err) {
         if (LL_I2C_IsActiveFlag_TXE(dev)) {
             LL_I2C_TransmitData8(dev, *cmd.data_ptr++);
             if (cmd.data_ptr - cmd.data == cmd.len) {
-                if (cmd.genStop) LL_I2C_GenerateStopCondition(dev);
-                state = cmd.genStop ? STATE_STOPPED : STATE_WAITING_START;
-                notifyThread(caller, notifyId);
+                state = STATE_WAITING_TX_STOP;
             }
+        }
+#if LOG_I2C_EMPTY_INT
+        if (i2c_did_nothing != i2c_did_nothing_maxlen) i2c_nothing_buf[i2c_did_nothing++] = dev->SR1;
+#endif
+        return;
+    case STATE_WAITING_TX_STOP:
+        if (LL_I2C_IsActiveFlag_TXE(dev)) {
+            if (cmd.genStop) LL_I2C_GenerateStopCondition(dev);
+            state = cmd.genStop ? STATE_STOPPED : STATE_WAITING_START;
+            LL_I2C_DisableIT_EVT(dev);
+            LL_I2C_DisableIT_BUF(dev);
+            notifyThread(caller, notifyId);
         }
 #if LOG_I2C_EMPTY_INT
         if (i2c_did_nothing != i2c_did_nothing_maxlen) i2c_nothing_buf[i2c_did_nothing++] = dev->SR1;
@@ -123,6 +133,8 @@ void I2C::interruptHandler(bool err) {
             } else if (cmd.data_ptr - cmd.data == cmd.len) {
                 if (cmd.genStop) LL_I2C_GenerateStopCondition(dev);
                 state = cmd.genStop ? STATE_STOPPED : STATE_WAITING_START;
+                LL_I2C_DisableIT_EVT(dev);
+                LL_I2C_DisableIT_BUF(dev);
                 notifyThread(caller, notifyId);
             }
         }

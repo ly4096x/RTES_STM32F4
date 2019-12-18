@@ -64,6 +64,7 @@ file(GLOB SRCS
     src/*.cc
     src/*.cpp
     src/*.cxx
+    lib/vl53l1x-arduino/VL53L1X.cpp
     #lib/Adafruit-PWM-Servo-Driver-Library/Adafruit_PWMServoDriver.cpp
 )
 
