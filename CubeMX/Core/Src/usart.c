@@ -70,7 +70,7 @@ void MX_USART1_UART_Init(void)
   LL_DMA_DisableFifoMode(DMA2, LL_DMA_STREAM_7);
 
   /* USART1 interrupt Init */
-  NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),10, 0));
   NVIC_EnableIRQ(USART1_IRQn);
 
   USART_InitStruct.BaudRate = 512000;

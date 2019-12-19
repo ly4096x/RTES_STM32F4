@@ -4,7 +4,8 @@
 extern xHAL::USART console;
 
 void vlq_thread(void *param) {
-    vTaskDelay(configTICK_RATE_HZ * 5);
+    vTaskSuspend(nullptr);
+    
     VL53L1X sensor;
     sensor.setTimeout(500);
     if (!sensor.init()) {
@@ -18,7 +19,7 @@ void vlq_thread(void *param) {
     // the minimum timing budget is 20 ms for short distance mode and 33 ms for
     // medium and long distance modes. See the VL53L1X datasheet for more
     // information on range and timing limits.
-    sensor.setDistanceMode(VL53L1X::Long);
+    sensor.setDistanceMode(VL53L1X::Medium);
     sensor.setMeasurementTimingBudget(50000);
 
     // Start continuous readings at a rate of one measurement every 50 ms (the
@@ -26,9 +27,10 @@ void vlq_thread(void *param) {
     // timing budget.
     sensor.startContinuous(50);
     while (true) {
-        console.printf("[vlq] %d\n", sensor.read());
+        console.printf("[vlq] %7d %4d\n", millis(), sensor.read());
         if (sensor.timeoutOccurred()) {
             console.printf("[vlq] TIMEOUT\n");
         }
+        vTaskDelay(1);
     }
 }

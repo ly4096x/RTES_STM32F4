@@ -172,8 +172,8 @@ void TIM5_IRQHandler                   () { DefaultHardwareExceptionHandler(__fu
 void SPI3_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
 void UART4_IRQHandler                  () { DefaultHardwareExceptionHandler(__func__); }
 void UART5_IRQHandler                  () { DefaultHardwareExceptionHandler(__func__); }
-void TIM6_DAC_IRQHandler               () { DefaultHardwareExceptionHandler(__func__); }
-void TIM7_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
+void TIM6_DAC_IRQHandler               () { DefaultHardwareExceptionHandler(__func__); } // \
+void TIM7_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); } // TIM7
 void DMA2_Stream0_IRQHandler           () { DefaultHardwareExceptionHandler(__func__); }
 void DMA2_Stream1_IRQHandler           () { DefaultHardwareExceptionHandler(__func__); }
 void DMA2_Stream2_IRQHandler           () { DefaultHardwareExceptionHandler(__func__); }
@@ -259,3 +259,5 @@ void I2C1_ER_IRQHandler() {
     extern xHAL::I2C xI2C1;
     xI2C1.interruptHandler(1);
 }
+
+extern void TIM7_IRQHandler();

@@ -3,7 +3,7 @@
 // or paraphrased from the API source code, API user manual (UM2356), and
 // VL53L1X datasheet.
 
-#include <vl53l1x-arduino/VL53L1X.h>
+#include "VL53L1X.h"
 #include <Wire.h>
 
 // Constructors ////////////////////////////////////////////////////////////////
@@ -449,6 +449,7 @@ uint16_t VL53L1X::read(bool blocking)
         ranging_data.ambient_count_rate_MCPS = 0;
         return ranging_data.range_mm;
       }
+      delay(0);
     }
   }
 

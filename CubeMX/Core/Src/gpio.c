@@ -115,7 +115,7 @@ void MX_GPIO_Init(void)
   LL_GPIO_SetPinMode(VL53L1X_INT_GPIO_Port, VL53L1X_INT_Pin, LL_GPIO_MODE_INPUT);
 
   /* EXTI interrupt init*/
-  NVIC_SetPriority(EXTI0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_SetPriority(EXTI0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),10, 0));
   NVIC_EnableIRQ(EXTI0_IRQn);
 
 }

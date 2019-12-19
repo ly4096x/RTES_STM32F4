@@ -21,6 +21,7 @@ void idle_thread(void *param);
 void main_thread(void *param);
 void servo_thread(void *param);
 extern void vlq_thread(void *param);
+extern void encoder_tim4_thread(void *param);
 
 xHAL::DMA console_uart_tx_dma(DMA2, LL_DMA_STREAM_7, NOTIFY_USART_CONSOLE_TX_DMA_TC);
 xHAL::USART console(USART1, &console_uart_tx_dma, NOTIFY_USART_CONSOLE_TXE, NOTIFY_USART_CONSOLE_RXNE);
@@ -48,6 +49,9 @@ int main(void) {
     MX_DMA_Init();
     MX_I2C1_Init();
     MX_TIM14_Init();
+    MX_TIM3_Init();
+    MX_TIM4_Init();
+    MX_TIM7_Init();
     MX_USART1_UART_Init();
     LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_7, LL_USART_DMA_GetRegAddr(USART1));
 
@@ -66,6 +70,7 @@ int main(void) {
     xTaskCreate(servo_thread, "servo", 256, nullptr, 30, tasklistend++);
     xTaskCreate([](void*) { shell.run(); }, "shell", 256, nullptr, 50, tasklistend++);
     xTaskCreate(vlq_thread, "vlq", 256, nullptr, 20, tasklistend++);
+    xTaskCreate(encoder_tim4_thread, "encoder4", 256, nullptr, 20, tasklistend++);
 
     LL_GPIO_SetOutputPin(GPIOE, LL_GPIO_PIN_1);
 
@@ -75,6 +80,8 @@ int main(void) {
 
 void main_thread(void *param) {
     auto thisTask = xTaskGetCurrentTaskHandle();
+    vTaskSuspend(nullptr);
+
     uint32_t c = 0;
     while (1) {
         LL_GPIO_TogglePin(LED_OnBoard_GPIO_Port, LED_OnBoard_Pin);
@@ -87,7 +94,7 @@ void main_thread(void *param) {
 void servo_thread(void *param) {
     auto thisTask = xTaskGetCurrentTaskHandle();
     
-    u16 val = 0;
+    u16 val = 1500;
     auto dev = TIM14;
     LL_TIM_SetAutoReload(dev, 2600);
     LL_TIM_EnableARRPreload(dev);
@@ -95,12 +102,15 @@ void servo_thread(void *param) {
     LL_TIM_OC_SetCompareCH1(dev, val);
     LL_TIM_CC_EnableChannel(dev, LL_TIM_CHANNEL_CH1);
     LL_TIM_EnableCounter(dev);
+    
+    vTaskSuspend(nullptr);
+
     while (1) {
         val += 5;
         if (val > LL_TIM_GetAutoReload(dev)) val = 0;
         console.printf("[%s] STACK_UNUSED = %3" PRIu32 " val = %" PRIu16 "\n", pcTaskGetName(thisTask), uxTaskGetStackHighWaterMark(thisTask), val);
         LL_TIM_OC_SetCompareCH1(dev, val);
-        vTaskDelay(10);
+        vTaskDelay(1);
     }
 }
 

@@ -59,7 +59,7 @@ void MX_SPI1_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* SPI1 interrupt Init */
-  NVIC_SetPriority(SPI1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_SetPriority(SPI1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),10, 0));
   NVIC_EnableIRQ(SPI1_IRQn);
 
   SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
