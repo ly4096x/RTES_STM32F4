@@ -76,6 +76,10 @@ void SystemClock_Config(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define Debug_PE2_Pin LL_GPIO_PIN_2
+#define Debug_PE2_GPIO_Port GPIOE
+#define Debug_PE3_Pin LL_GPIO_PIN_3
+#define Debug_PE3_GPIO_Port GPIOE
 #define LED_OnBoard_Pin LL_GPIO_PIN_1
 #define LED_OnBoard_GPIO_Port GPIOA
 #define SPI_Flash_NCS_Pin LL_GPIO_PIN_15

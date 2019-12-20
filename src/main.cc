@@ -17,11 +17,11 @@ extern "C" {
 #include <xHAL/Shell>
 #include "TaskNotificationIds.h"
 
-void idle_thread(void *param);
+void blink_thread(void *param);
 void main_thread(void *param);
 void servo_thread(void *param);
 extern void vlq_thread(void *param);
-extern void encoder_tim4_thread(void *param);
+extern void motor_thread(void *param);
 
 xHAL::DMA console_uart_tx_dma(DMA2, LL_DMA_STREAM_7, NOTIFY_USART_CONSOLE_TX_DMA_TC);
 xHAL::USART console(USART1, &console_uart_tx_dma, NOTIFY_USART_CONSOLE_TXE, NOTIFY_USART_CONSOLE_RXNE);
@@ -48,10 +48,11 @@ int main(void) {
     LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_0);
     MX_DMA_Init();
     MX_I2C1_Init();
-    MX_TIM14_Init();
     MX_TIM3_Init();
     MX_TIM4_Init();
     MX_TIM7_Init();
+    MX_TIM12_Init();
+    MX_TIM14_Init();
     MX_USART1_UART_Init();
     LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_7, LL_USART_DMA_GetRegAddr(USART1));
 
@@ -66,16 +67,17 @@ int main(void) {
 
     extern TaskHandle_t *tasklistend;
     //xTaskCreate(idle_thread, "idle", 256, nullptr, 0, nullptr);
+    xTaskCreate(blink_thread, "_blink", 128, nullptr, 10, tasklistend++);
     xTaskCreate(main_thread, "main", 256, nullptr, 10, tasklistend++);
     xTaskCreate(servo_thread, "servo", 256, nullptr, 30, tasklistend++);
     xTaskCreate([](void*) { shell.run(); }, "shell", 256, nullptr, 50, tasklistend++);
     xTaskCreate(vlq_thread, "vlq", 256, nullptr, 20, tasklistend++);
-    xTaskCreate(encoder_tim4_thread, "encoder4", 256, nullptr, 20, tasklistend++);
+    xTaskCreate(motor_thread, "motor", 256, nullptr, 20, tasklistend++);
 
     LL_GPIO_SetOutputPin(GPIOE, LL_GPIO_PIN_1);
 
     vTaskStartScheduler();
-    while (1);
+    FailAndInfiniteLoop();
 }
 
 void main_thread(void *param) {
@@ -101,7 +103,9 @@ void servo_thread(void *param) {
     LL_TIM_SetPrescaler(dev, get_cpu_frequency() / 2 / 1000000 - 1);
     LL_TIM_OC_SetCompareCH1(dev, val);
     LL_TIM_CC_EnableChannel(dev, LL_TIM_CHANNEL_CH1);
+    LL_TIM_OC_SetCompareCH1(TIM14, 1500);
     LL_TIM_EnableCounter(dev);
+    
     
     vTaskSuspend(nullptr);
 
@@ -114,8 +118,18 @@ void servo_thread(void *param) {
     }
 }
 
-void idle_thread(void *param) {
-    vTaskDelete(nullptr);
+void blink_thread(void *param) {
+    extern u32 blink_sequence[4];
+    while (true) {
+        LL_GPIO_ResetOutputPin(LED_OnBoard_GPIO_Port, LED_OnBoard_Pin);
+        vTaskDelay(blink_sequence[0]);
+        LL_GPIO_SetOutputPin(LED_OnBoard_GPIO_Port, LED_OnBoard_Pin);
+        vTaskDelay(blink_sequence[1]);
+        LL_GPIO_ResetOutputPin(LED_OnBoard_GPIO_Port, LED_OnBoard_Pin);
+        vTaskDelay(blink_sequence[2]);
+        LL_GPIO_SetOutputPin(LED_OnBoard_GPIO_Port, LED_OnBoard_Pin);
+        vTaskDelay(blink_sequence[3]);
+    }
 }
 
 void Error_Handler(void) {

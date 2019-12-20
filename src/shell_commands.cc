@@ -4,6 +4,7 @@
 #include <xHAL/Shell>
 #include <cctype>
 #include <cstring>
+#include <cinttypes>
 #include <cstdlib>
 
 extern "C" {
@@ -12,6 +13,7 @@ extern "C" {
 
 extern xHAL::USART console;
 extern xHAL::I2C xI2C1;
+u32 blink_sequence[4] = {10, 30, 10, 2000};
 
 int i2c1_cmd_handler(const u8 argc, char **argv) {
     if (argc < 5) { console.printf("too few args\n"); return 1; }
@@ -91,6 +93,28 @@ int setpwm_cmd_handler(const u8 argc, char **argv) {
     return 0;
 }
 
+int blink_cmd_handler(const u8 argc, char **argv) {
+    if (argc < 2) { console.printf("too few args\n"); return 1; }
+    const u8 argv1len = strlen(argv[1]);
+
+    if (strlen("set") == argv1len && strncmp("set", argv[1], argv1len) == 0) {
+        if (argc < 6) { console.printf("too few args\n"); return 1; }
+        for (u32 i=0; i!=4; ++i) 
+            blink_sequence[i] = strtoul(argv[3 + i], nullptr, 0);
+    } else if (strlen("get") == argv1len && strncmp("get", argv[1], argv1len) == 0) {
+        console.printf("%" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 "\n",
+            blink_sequence[0],
+            blink_sequence[1],
+            blink_sequence[2],
+            blink_sequence[3]
+        );
+    } else {
+        console.printf("err: invalid command \"%.*s\"\n", argv1len, argv[1]);
+        return 1;
+    }
+    return 0;
+}
+
 int mem_cmd_handler(const u8 argc, char **argv) {
     if (argc < 3) { console.printf("too few args\n"); return 1; }
     const u8 argv1len = strlen(argv[1]);
@@ -115,8 +139,8 @@ int m4_cmd_handler(const u8 argc, char **argv) {
     const u8 argv1len = strlen(argv[1]);
     f32 val;
 
-    extern f32 pid_param[4], target_speed_rpm;
-    f32 &kp = pid_param[0], &ki = pid_param[1], &kd = pid_param[2], &dir = pid_param[3];
+    extern f32 pid_param[], target_speed_rpm;
+    f32 &kp = pid_param[0], &ki = pid_param[1], &kd = pid_param[2];
 
     if (strlen("p") == argv1len && strncmp("p", argv[1], argv1len) == 0) {
         if (argc < 3) { console.printf("too few args\n"); return 1; }
@@ -136,8 +160,14 @@ int m4_cmd_handler(const u8 argc, char **argv) {
         target_speed_rpm = val;
     } else if (strlen("dir") == argv1len && strncmp("dir", argv[1], argv1len) == 0) {
         if (argc < 3) { console.printf("too few args\n"); return 1; }
-        val = strtof(argv[2], nullptr);
-        dir = val;
+        extern i32 encoder_dir[];
+        encoder_dir[0] = strtol(argv[2], nullptr, 0);
+        encoder_dir[1] = strtol(argv[3], nullptr, 0);
+    } else if (strlen("diro") == argv1len && strncmp("diro", argv[1], argv1len) == 0) {
+        if (argc < 3) { console.printf("too few args\n"); return 1; }
+        extern i32 motor_dir[];
+        motor_dir[0] = strtol(argv[2], nullptr, 0);
+        motor_dir[1] = strtol(argv[3], nullptr, 0);
     } else if (strlen("get") == argv1len && strncmp("get", argv[1], argv1len) == 0) {
         console.printf("p = %.2f i = %.2f d = %.2f\n", kp, ki, kd);
     }
@@ -150,6 +180,7 @@ xHAL::ShellCommand cmds[] = {
     {"i2c1", &i2c1_cmd_handler},
     {"task", &taskControl_cmd_handler},
     {"setpwm", &setpwm_cmd_handler},
+    {"blink", &blink_cmd_handler},
     {"mem", &mem_cmd_handler},
     {"m4", &m4_cmd_handler},
     {nullptr, nullptr}
