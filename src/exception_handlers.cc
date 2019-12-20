@@ -169,9 +169,9 @@ void DMA1_Stream7_IRQHandler           () { DefaultHardwareExceptionHandler(__fu
 void FSMC_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
 void SDIO_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
 void TIM5_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
-void SPI3_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); }
-void UART4_IRQHandler                  () { DefaultHardwareExceptionHandler(__func__); }
-void UART5_IRQHandler                  () { DefaultHardwareExceptionHandler(__func__); }
+void SPI3_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); } // \
+void UART4_IRQHandler                  () { DefaultHardwareExceptionHandler(__func__); } // UART4 \
+void UART5_IRQHandler                  () { DefaultHardwareExceptionHandler(__func__); } // UART5
 void TIM6_DAC_IRQHandler               () { DefaultHardwareExceptionHandler(__func__); } // \
 void TIM7_IRQHandler                   () { DefaultHardwareExceptionHandler(__func__); } // TIM7
 void DMA2_Stream0_IRQHandler           () { DefaultHardwareExceptionHandler(__func__); }
@@ -249,6 +249,22 @@ void USART1_IRQHandler(void) {
         return;
     }
     FailAndInfiniteLoop();
+}
+
+void UART4_IRQHandler(void) {
+    extern xHAL::USART xUART4;
+    if (LL_USART_IsEnabledIT_RXNE(UART4) && LL_USART_IsActiveFlag_RXNE(UART4)) {
+        xUART4.rxInterruptHandler();
+        return;
+    }
+}
+
+void UART5_IRQHandler(void) {
+    extern xHAL::USART xUART5;
+    if (LL_USART_IsEnabledIT_RXNE(UART5) && LL_USART_IsActiveFlag_RXNE(UART5)) {
+        xUART5.rxInterruptHandler();
+        return;
+    }
 }
 
 void I2C1_EV_IRQHandler() {

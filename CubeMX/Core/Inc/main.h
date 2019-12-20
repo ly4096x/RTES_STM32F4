@@ -84,6 +84,10 @@ void SystemClock_Config(void);
 #define LED_OnBoard_GPIO_Port GPIOA
 #define SPI_Flash_NCS_Pin LL_GPIO_PIN_15
 #define SPI_Flash_NCS_GPIO_Port GPIOA
+#define ESP1_EN_Pin LL_GPIO_PIN_0
+#define ESP1_EN_GPIO_Port GPIOD
+#define ESP2_EN_Pin LL_GPIO_PIN_1
+#define ESP2_EN_GPIO_Port GPIOD
 #define VL53L1X_INT_Pin LL_GPIO_PIN_0
 #define VL53L1X_INT_GPIO_Port GPIOE
 #define VL53L1X_INT_EXTI_IRQn EXTI0_IRQn

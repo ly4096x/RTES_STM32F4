@@ -22,10 +22,15 @@ void main_thread(void *param);
 void servo_thread(void *param);
 extern void vlq_thread(void *param);
 extern void motor_thread(void *param);
+extern void navigation_thread(void *param);
+extern void rssi_receiver_1_thread(void *param);
+extern void rssi_receiver_2_thread(void *param);
 
 xHAL::DMA console_uart_tx_dma(DMA2, LL_DMA_STREAM_7, NOTIFY_USART_CONSOLE_TX_DMA_TC);
 xHAL::USART console(USART1, &console_uart_tx_dma, NOTIFY_USART_CONSOLE_TXE, NOTIFY_USART_CONSOLE_RXNE);
 xHAL::I2C xI2C1(I2C1, NOTIFY_I2C1);
+xHAL::USART xUART4(UART4, nullptr, NOTIFY_INVALID_VALUE, NOTIFY_UART4_RXNE);
+xHAL::USART xUART5(UART5, nullptr, NOTIFY_INVALID_VALUE, NOTIFY_UART5_RXNE);
 
 extern xHAL::ShellCommand cmds[];
 xHAL::Shell shell(cmds);
@@ -54,6 +59,8 @@ int main(void) {
     MX_TIM12_Init();
     MX_TIM14_Init();
     MX_USART1_UART_Init();
+    MX_UART4_Init();
+    MX_UART5_Init();
     LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_7, LL_USART_DMA_GetRegAddr(USART1));
 
     LL_GPIO_ResetOutputPin(GPIOE, LL_GPIO_PIN_1);
@@ -63,7 +70,13 @@ int main(void) {
     while (LL_USART_IsActiveFlag_RXNE(USART1) && get_cycle_counter_value() < deadline)
         LL_USART_ReceiveData8(USART1);
 
+    LL_GPIO_ResetOutputPin(ESP1_EN_GPIO_Port, ESP1_EN_Pin);
+    LL_GPIO_ResetOutputPin(ESP2_EN_GPIO_Port, ESP2_EN_Pin);
+
+    console.terminal_mode = true;
     LL_USART_EnableIT_RXNE(USART1);
+    LL_USART_EnableIT_RXNE(UART4);
+    LL_USART_EnableIT_RXNE(UART5);
 
     extern TaskHandle_t *tasklistend;
     //xTaskCreate(idle_thread, "idle", 256, nullptr, 0, nullptr);
@@ -73,6 +86,9 @@ int main(void) {
     xTaskCreate([](void*) { shell.run(); }, "shell", 256, nullptr, 50, tasklistend++);
     xTaskCreate(vlq_thread, "vlq", 256, nullptr, 20, tasklistend++);
     xTaskCreate(motor_thread, "motor", 256, nullptr, 20, tasklistend++);
+    xTaskCreate(navigation_thread, "nav", 256, nullptr, 40, tasklistend++);
+    xTaskCreate(rssi_receiver_1_thread, "rssi1", 256, nullptr, 30, tasklistend++);
+    xTaskCreate(rssi_receiver_2_thread, "rssi2", 256, nullptr, 30, tasklistend++);
 
     LL_GPIO_SetOutputPin(GPIOE, LL_GPIO_PIN_1);
 

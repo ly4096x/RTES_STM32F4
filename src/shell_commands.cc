@@ -139,7 +139,7 @@ int m4_cmd_handler(const u8 argc, char **argv) {
     const u8 argv1len = strlen(argv[1]);
     f32 val;
 
-    extern f32 pid_param[], target_speed_rpm[2];
+    extern f32 pid_param[];
     f32 &kp = pid_param[0], &ki = pid_param[1], &kd = pid_param[2];
 
     if (strlen("p") == argv1len && strncmp("p", argv[1], argv1len) == 0) {
@@ -156,6 +156,7 @@ int m4_cmd_handler(const u8 argc, char **argv) {
         kd = val;
     } else if (strlen("s") == argv1len && strncmp("s", argv[1], argv1len) == 0) {
         if (argc < 4) { console.printf("too few args\n"); return 1; }
+        extern volatile f32 target_speed_rpm[2];
         target_speed_rpm[0] = strtof(argv[2], nullptr);
         target_speed_rpm[1] = strtof(argv[3], nullptr);
     } else if (strlen("dir") == argv1len && strncmp("dir", argv[1], argv1len) == 0) {
@@ -179,38 +180,76 @@ int move_cmd_handler(const u8 argc, char **argv) {
     const u8 argv1len = strlen(argv[1]);
     f32 val;
 
-    extern f32 pid_param[], target_speed_rpm[2];
-    f32 &kp = pid_param[0], &ki = pid_param[1], &kd = pid_param[2];
+    extern volatile f32 target_speed_rpm[2];
+    static f32 duration = 1.95;
 
-    if (strlen("p") == argv1len && strncmp("p", argv[1], argv1len) == 0) {
+    if (strlen("left") == argv1len && strncmp("left", argv[1], argv1len) == 0) {
         if (argc < 3) { console.printf("too few args\n"); return 1; }
         val = strtof(argv[2], nullptr);
-        kp = val;
-    } else if (strlen("i") == argv1len && strncmp("i", argv[1], argv1len) == 0) {
+        target_speed_rpm[0] = -val;
+        target_speed_rpm[1] = val;
+        vTaskDelay(duration * configTICK_RATE_HZ);
+        target_speed_rpm[0] = 0;
+        target_speed_rpm[1] = 0;
+    } else if (strlen("right") == argv1len && strncmp("right", argv[1], argv1len) == 0) {
         if (argc < 3) { console.printf("too few args\n"); return 1; }
         val = strtof(argv[2], nullptr);
-        ki = val;
-    } else if (strlen("d") == argv1len && strncmp("d", argv[1], argv1len) == 0) {
+        target_speed_rpm[0] = val;
+        target_speed_rpm[1] = -val;
+        vTaskDelay(duration * configTICK_RATE_HZ);
+        target_speed_rpm[0] = 0;
+        target_speed_rpm[1] = 0;
+    } else if (strlen("front") == argv1len && strncmp("front", argv[1], argv1len) == 0) {
         if (argc < 3) { console.printf("too few args\n"); return 1; }
         val = strtof(argv[2], nullptr);
-        kd = val;
-    } else if (strlen("s") == argv1len && strncmp("s", argv[1], argv1len) == 0) {
-        if (argc < 4) { console.printf("too few args\n"); return 1; }
-        target_speed_rpm[0] = strtof(argv[2], nullptr);
-        target_speed_rpm[1] = strtof(argv[3], nullptr);
-    } else if (strlen("dir") == argv1len && strncmp("dir", argv[1], argv1len) == 0) {
-        if (argc < 4) { console.printf("too few args\n"); return 1; }
-        extern i32 encoder_dir[];
-        encoder_dir[0] = strtol(argv[2], nullptr, 0);
-        encoder_dir[1] = strtol(argv[3], nullptr, 0);
-    } else if (strlen("diro") == argv1len && strncmp("diro", argv[1], argv1len) == 0) {
-        if (argc < 4) { console.printf("too few args\n"); return 1; }
-        extern i32 motor_dir[];
-        motor_dir[0] = strtol(argv[2], nullptr, 0);
-        motor_dir[1] = strtol(argv[3], nullptr, 0);
-    } else if (strlen("get") == argv1len && strncmp("get", argv[1], argv1len) == 0) {
-        console.printf("p = %.2f i = %.2f d = %.2f\n", kp, ki, kd);
+        target_speed_rpm[0] = val;
+        target_speed_rpm[1] = val;
+        vTaskDelay(duration * configTICK_RATE_HZ);
+        target_speed_rpm[0] = 0;
+        target_speed_rpm[1] = 0;
+    } else if (strlen("back") == argv1len && strncmp("back", argv[1], argv1len) == 0) {
+        if (argc < 3) { console.printf("too few args\n"); return 1; }
+        val = strtof(argv[2], nullptr);
+        target_speed_rpm[0] = -val;
+        target_speed_rpm[1] = -val;
+        vTaskDelay(duration * configTICK_RATE_HZ);
+        target_speed_rpm[0] = 0;
+        target_speed_rpm[1] = 0;
+    } else if (strlen("settime") == argv1len && strncmp("settime", argv[1], argv1len) == 0) {
+        if (argc < 3) { console.printf("too few args\n"); return 1; }
+        duration = strtof(argv[2], nullptr);
     }
+    return 0;
+}
+
+int demo_cmd_handler(const u8 argc, char **argv) {
+    if (argc < 2) { console.printf("too few args\n"); return 1; }
+    const u8 argv1len = strlen(argv[1]);
+
+    if (strlen("set90") == argv1len && strncmp("set90", argv[1], argv1len) == 0) {
+        if (argc < 3) { console.printf("too few args\n"); return 1; }
+        extern f32 durationFor90;
+        durationFor90 = strtof(argv[2], nullptr);
+    } else if (strlen("setrpm") == argv1len && strncmp("setrpm", argv[1], argv1len) == 0) {
+        if (argc < 4) { console.printf("too few args\n"); return 1; }
+        extern f32 demo_rpm_turn, demo_rpm_straight;
+        demo_rpm_turn = strtof(argv[2], nullptr);
+        demo_rpm_straight = strtof(argv[3], nullptr);
+    } else if (strlen("setsvd") == argv1len && strncmp("setsvd", argv[1], argv1len) == 0) {
+        if (argc < 3) { console.printf("too few args\n"); return 1; }
+        extern u32 demo_servo_delay;
+        demo_servo_delay = strtoul(argv[2], nullptr, 0);
+    } else if (strlen("setthr") == argv1len && strncmp("setthr", argv[1], argv1len) == 0) {
+        if (argc < 3) { console.printf("too few args\n"); return 1; }
+        extern i32 demo_rssi_threshould;
+        demo_rssi_threshould = strtol(argv[2], nullptr, 0);
+    }
+    return 0;
+}
+
+int rssi_cmd_handler(const u8 argc, char **argv) {
+    extern i16 rssi[];
+    console.printf("%3d %3d\n", rssi[0], rssi[1]);
     return 0;
 }
 
@@ -224,5 +263,7 @@ xHAL::ShellCommand cmds[] = {
     {"mem", &mem_cmd_handler},
     {"m4", &m4_cmd_handler},
     {"move", &move_cmd_handler},
+    {"demo", &demo_cmd_handler},
+    {"rssi", &rssi_cmd_handler},
     {nullptr, nullptr}
 };

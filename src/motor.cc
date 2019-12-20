@@ -7,7 +7,7 @@
 
 extern xHAL::USART console;
 f32 pid_param[] = {80, 600, 0};
-f32 target_speed_rpm[2] = {0};
+volatile f32 target_speed_rpm[2] = {0};
 TIM_TypeDef *motor_timer = TIM12, *encoders[2] = {TIM3, TIM4}, *pid_timer = TIM7;
 i32 motor_dir[2] = {-1, -1}, encoder_dir[2] = {-1, 1};
 
@@ -86,6 +86,7 @@ void TIM7_IRQHandler() {
     for (u32 i = 0; i != 2; ++i) {
         if (-0.0001f < target_speed_rpm[i] && target_speed_rpm[i] < 0.0001f) {
             pwm_offset[i] = 0;
+            integrals[i] = 0;
             continue;
         }
 

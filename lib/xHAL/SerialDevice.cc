@@ -53,7 +53,7 @@ char SerialDevice::getChar(u32 timeout, bool doNotEchoIfBackspace, bool waitFore
     ret = peekChar(getDeadline(timeout), waitForever);
     if (rxEcho) {
         u32 echoDeadline = getDeadline(timeout);
-        if (ret == '\b') {
+        if (terminal_mode && ret == '\b') {
             if (!doNotEchoIfBackspace) {
                 writeToTxBuffer("\b \b", 3, echoDeadline);
                 writeCharToTxBuffer(0, true, echoDeadline); // flush

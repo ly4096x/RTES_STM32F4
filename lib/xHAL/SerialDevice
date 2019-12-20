@@ -43,6 +43,8 @@ public:
 
     virtual void txInterruptHandler() = 0;
     virtual void rxInterruptHandler() = 0;
+
+    bool terminal_mode = false;
 };
 
 }

@@ -64,8 +64,8 @@ void USART::rxInterruptHandler() {
     bool overflow = 0;
     if (rxbuf_end + 1 == rxbuf_begin || rxbuf_end + 1 - sizeof(rxbuf) == rxbuf_begin)
         overflow = 1;
-    if (*rxbuf_end == '\r') return;
-    if (*rxbuf_end == '\n' || *rxbuf_end == 0x03 || overflow || rxEcho) { // newline or ctrl-c or overflow
+    if (terminal_mode && *rxbuf_end == '\r') return;
+    if ((terminal_mode && (*rxbuf_end == '\n' || *rxbuf_end == 0x03)) || overflow || rxEcho) { // newline or ctrl-c or overflow
         notifyThread(rxCaller, rxNotifyId);
     }
     if (overflow) return;
