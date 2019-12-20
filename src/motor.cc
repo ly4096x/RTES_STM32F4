@@ -7,7 +7,7 @@
 
 extern xHAL::USART console;
 f32 pid_param[] = {80, 600, 0};
-f32 target_speed_rpm = 0;
+f32 target_speed_rpm[2] = {0};
 TIM_TypeDef *motor_timer = TIM12, *encoders[2] = {TIM3, TIM4}, *pid_timer = TIM7;
 i32 motor_dir[2] = {-1, -1}, encoder_dir[2] = {-1, 1};
 
@@ -47,15 +47,22 @@ void motor_thread(void *param) {
         for (i32 i=0; i!=2; ++i) {
             auto &encoderVal = encoderVals[i];
             auto &speed = speeds[i];
-            
-        encoderVal[0] = encoderVal[1];
-        encoderVal[1] = LL_TIM_GetCounter(encoders[i]);
-        speed[0] = speed[1];
-        speed[1] = (i16)(encoderVal[1] - encoderVal[0]) / 1560.f * 60 * 100;
-        f32 accel = (speed[1] - speed[0]) / 60 / 10e-3f;
-        console.printf("[mot%d] pos = %5" PRIu16 " speed = %6.2frpm accel = %6.2fr/s^2 time = %9" PRIu32 "ms\n", i, encoderVal[0], speed[1], accel, getSysTickCount() * 10);
+
+            encoderVal[0] = encoderVal[1];
+            encoderVal[1] = LL_TIM_GetCounter(encoders[i]);
+            speed[0] = speed[1];
+            speed[1] = (i16)(encoderVal[1] - encoderVal[0]) / 1560.f * 60 * 100;
+            f32 accel = (speed[1] - speed[0]) / 60 / 10e-3f;
+            console.printf(
+                "[mot%d] pos = %5" PRIu16 " speed = %6.2frpm accel = %6.2fr/s^2 time = %9" PRIu32 "ms\n",
+                i,
+                encoderVal[0],
+                speed[1],
+                accel,
+                getSysTickCount() * 10
+            );
         }
-        
+
         vTaskDelay(1);
     }
 }
@@ -75,31 +82,32 @@ void TIM7_IRQHandler() {
         encoderVal[1] = LL_TIM_GetCounter(encoders[i]);
     }
 
-    i16 pwm[2];
-    if (-0.0001f < target_speed_rpm && target_speed_rpm < 0.0001f){
-        pwm[0] = 0;
-        pwm[1] = 0;
-    } else for (u32 i = 0; i != 2; ++i) {
+    i16 pwm_offset[2];
+    for (u32 i = 0; i != 2; ++i) {
+        if (-0.0001f < target_speed_rpm[i] && target_speed_rpm[i] < 0.0001f) {
+            pwm_offset[i] = 0;
+            continue;
+        }
+
         auto &speed = speeds[i];
         auto &encoderVal = encoderVals[i];
         auto &integral = integrals[i];
 
         speed = pid_param[3] * (i16)(encoderVal[1] - encoderVal[0]) / 1560.f / dt * 60 * encoder_dir[i];
         
-        f32 err_rps = (target_speed_rpm - speed) / 60;
+        f32 err_rps = (target_speed_rpm[i] - speed) / 60;
         
         integral += err_rps * dt;
         f32 P = kp * err_rps;
         f32 I = ki * integral;
         f32 D = kd * err_rps / dt;
-        pwm[i] = P + I + D;
+        pwm_offset[i] = P + I + D;
         if (I > 500) integral = 500 / ki;
         else if (I < -500) integral = -500 / ki;
-        if (pwm[i] > 500) pwm[i] = 500;
-        else if (pwm[i] < -500) pwm[i] = -500;
+        if (pwm_offset[i] > 500) pwm_offset[i] = 500;
+        else if (pwm_offset[i] < -500) pwm_offset[i] = -500;
     }
 
-    LL_TIM_OC_SetCompareCH1(motor_timer, 1500 + pwm[0] * motor_dir[0]);
-    LL_TIM_OC_SetCompareCH2(motor_timer, 1500 + pwm[1] * motor_dir[1]);
-
+    LL_TIM_OC_SetCompareCH1(motor_timer, 1500 + pwm_offset[0] * motor_dir[0]);
+    LL_TIM_OC_SetCompareCH2(motor_timer, 1500 + pwm_offset[1] * motor_dir[1]);
 }

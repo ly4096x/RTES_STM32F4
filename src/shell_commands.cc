@@ -139,7 +139,7 @@ int m4_cmd_handler(const u8 argc, char **argv) {
     const u8 argv1len = strlen(argv[1]);
     f32 val;
 
-    extern f32 pid_param[], target_speed_rpm;
+    extern f32 pid_param[], target_speed_rpm[2];
     f32 &kp = pid_param[0], &ki = pid_param[1], &kd = pid_param[2];
 
     if (strlen("p") == argv1len && strncmp("p", argv[1], argv1len) == 0) {
@@ -155,16 +155,56 @@ int m4_cmd_handler(const u8 argc, char **argv) {
         val = strtof(argv[2], nullptr);
         kd = val;
     } else if (strlen("s") == argv1len && strncmp("s", argv[1], argv1len) == 0) {
-        if (argc < 3) { console.printf("too few args\n"); return 1; }
-        val = strtof(argv[2], nullptr);
-        target_speed_rpm = val;
+        if (argc < 4) { console.printf("too few args\n"); return 1; }
+        target_speed_rpm[0] = strtof(argv[2], nullptr);
+        target_speed_rpm[1] = strtof(argv[3], nullptr);
     } else if (strlen("dir") == argv1len && strncmp("dir", argv[1], argv1len) == 0) {
-        if (argc < 3) { console.printf("too few args\n"); return 1; }
+        if (argc < 4) { console.printf("too few args\n"); return 1; }
         extern i32 encoder_dir[];
         encoder_dir[0] = strtol(argv[2], nullptr, 0);
         encoder_dir[1] = strtol(argv[3], nullptr, 0);
     } else if (strlen("diro") == argv1len && strncmp("diro", argv[1], argv1len) == 0) {
+        if (argc < 4) { console.printf("too few args\n"); return 1; }
+        extern i32 motor_dir[];
+        motor_dir[0] = strtol(argv[2], nullptr, 0);
+        motor_dir[1] = strtol(argv[3], nullptr, 0);
+    } else if (strlen("get") == argv1len && strncmp("get", argv[1], argv1len) == 0) {
+        console.printf("p = %.2f i = %.2f d = %.2f\n", kp, ki, kd);
+    }
+    return 0;
+}
+
+int move_cmd_handler(const u8 argc, char **argv) {
+    if (argc < 2) { console.printf("too few args\n"); return 1; }
+    const u8 argv1len = strlen(argv[1]);
+    f32 val;
+
+    extern f32 pid_param[], target_speed_rpm[2];
+    f32 &kp = pid_param[0], &ki = pid_param[1], &kd = pid_param[2];
+
+    if (strlen("p") == argv1len && strncmp("p", argv[1], argv1len) == 0) {
         if (argc < 3) { console.printf("too few args\n"); return 1; }
+        val = strtof(argv[2], nullptr);
+        kp = val;
+    } else if (strlen("i") == argv1len && strncmp("i", argv[1], argv1len) == 0) {
+        if (argc < 3) { console.printf("too few args\n"); return 1; }
+        val = strtof(argv[2], nullptr);
+        ki = val;
+    } else if (strlen("d") == argv1len && strncmp("d", argv[1], argv1len) == 0) {
+        if (argc < 3) { console.printf("too few args\n"); return 1; }
+        val = strtof(argv[2], nullptr);
+        kd = val;
+    } else if (strlen("s") == argv1len && strncmp("s", argv[1], argv1len) == 0) {
+        if (argc < 4) { console.printf("too few args\n"); return 1; }
+        target_speed_rpm[0] = strtof(argv[2], nullptr);
+        target_speed_rpm[1] = strtof(argv[3], nullptr);
+    } else if (strlen("dir") == argv1len && strncmp("dir", argv[1], argv1len) == 0) {
+        if (argc < 4) { console.printf("too few args\n"); return 1; }
+        extern i32 encoder_dir[];
+        encoder_dir[0] = strtol(argv[2], nullptr, 0);
+        encoder_dir[1] = strtol(argv[3], nullptr, 0);
+    } else if (strlen("diro") == argv1len && strncmp("diro", argv[1], argv1len) == 0) {
+        if (argc < 4) { console.printf("too few args\n"); return 1; }
         extern i32 motor_dir[];
         motor_dir[0] = strtol(argv[2], nullptr, 0);
         motor_dir[1] = strtol(argv[3], nullptr, 0);
@@ -183,5 +223,6 @@ xHAL::ShellCommand cmds[] = {
     {"blink", &blink_cmd_handler},
     {"mem", &mem_cmd_handler},
     {"m4", &m4_cmd_handler},
+    {"move", &move_cmd_handler},
     {nullptr, nullptr}
 };
