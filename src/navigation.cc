@@ -7,9 +7,18 @@
 
 extern xHAL::USART console;
 
+/*
+durationFor90 : the time needed to make a 90 deg turn
+durationFor1m : the time needed to go 1 meter in a straight line
+demo_rpm_turn : motor RPM for turning
+demo_rpm_straight : motor RPM for going in straight line
+demo_servo_delay : delay factor for servo motion
+demo_rssi_threshould : RSSI threshould for making navigation decision
+*/
 f32 durationFor90 = 1.95f, durationFor1m = 5.f, demo_rpm_turn = 40.f, demo_rpm_straight = 120;
 u32 demo_servo_delay = 25;
 i32 demo_rssi_threshould = 2;
+
 
 u32 move_until = 0;
 u8 move_mode = 0;
@@ -90,11 +99,13 @@ u16 get_range() {
     return distance;
 }
 
+// keep doing the current motion and stop until the measured range is larger than limit
 inline void stop_when_range_larger(const u16 range) {
     while (get_range() < range);
     stop_car();
 }
 
+// get the least range limit
 const f32 get_least_range() {
     static constexpr f32 PI = 3.14159265359f;
     const f32 xlim = servo_current_degree == 0 ? 1e6 : (200 / sinf(abs(servo_current_degree) * PI / 180));
@@ -103,6 +114,7 @@ const f32 get_least_range() {
     return least_range;
 }
 
+// avoid obstacles by rotating
 void avoid_obstacle(i8 &dir) {
     const f32 least_range = get_least_range();
     if (get_range() < least_range) {
@@ -115,6 +127,7 @@ void avoid_obstacle(i8 &dir) {
     }
 }
 
+// see if able to find a 40x40cm movable field. if not, do obstacle avoidance
 void clear_path() {
     for (i16 deg = -90; deg <= 90; deg += 10) {
         set_servo(deg);

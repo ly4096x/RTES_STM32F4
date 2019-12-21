@@ -4,9 +4,11 @@
 extern xHAL::USART console;
 VL53L1X *sensor_ptr;
 
+// VL53L1X test thread
 void vlq_thread(void *param) {
     vTaskDelay(1 * configTICK_RATE_HZ);
 
+    // initialize VL53L1X
     VL53L1X sensor;
     sensor_ptr = &sensor;
     sensor.setTimeout(500);

@@ -5,11 +5,21 @@
 #include <cinttypes>
 #include <main.h>
 
-extern xHAL::USART console;
+/*
+pid_param : {Kp, Ki, Kd}
+target_speed_rpm : RPM setpoint for each motor
+motor_timer : hardware timer used to generate timer control signal
+encoders : hardware timers for counting each encoder output
+pid_timer : hardwaare timer for generating interrupt at constant rate for control algorithm
+motor_dir : motor direction correction for each motor
+encoder_dir : encoder direction correction for each encoder
+*/
 f32 pid_param[] = {80, 600, 0};
 volatile f32 target_speed_rpm[2] = {0};
 TIM_TypeDef *motor_timer = TIM12, *encoders[2] = {TIM3, TIM4}, *pid_timer = TIM7;
 i32 motor_dir[2] = {-1, -1}, encoder_dir[2] = {-1, 1};
+
+extern xHAL::USART console;
 
 void initencoder(TIM_TypeDef *dev) {
     LL_TIM_SetAutoReload(dev, 0xffff);

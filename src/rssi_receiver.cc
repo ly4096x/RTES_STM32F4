@@ -6,6 +6,10 @@
 
 extern xHAL::USART console, xUART4, xUART5;
 
+/*
+rssi : RSSI value received from each ESP8266
+(Only using 1 of them since the proof of concept failed for dual antenna navigation)
+*/
 i16 rssi[2] = {0};
 
 void rssi_receiver_1_thread(void *param) {

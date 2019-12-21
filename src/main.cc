@@ -37,6 +37,9 @@ xHAL::Shell shell(cmds);
 
 extern "C"
 int main(void) {
+
+    // intialize hardware
+
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
     NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
@@ -63,15 +66,16 @@ int main(void) {
     MX_UART5_Init();
     LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_7, LL_USART_DMA_GetRegAddr(USART1));
 
+    // done initialize hardware
+
+    // turn off VL53L1X through XSHUT pin
     LL_GPIO_ResetOutputPin(GPIOE, LL_GPIO_PIN_1);
     delay_micros(100000);
 
+    // clear console buffer
     u32 deadline = get_cycle_counter_value() + SystemCoreClock / 1000 * 100;
     while (LL_USART_IsActiveFlag_RXNE(USART1) && get_cycle_counter_value() < deadline)
         LL_USART_ReceiveData8(USART1);
-
-    LL_GPIO_ResetOutputPin(ESP1_EN_GPIO_Port, ESP1_EN_Pin);
-    LL_GPIO_ResetOutputPin(ESP2_EN_GPIO_Port, ESP2_EN_Pin);
 
     console.terminal_mode = true;
     LL_USART_EnableIT_RXNE(USART1);
@@ -79,7 +83,6 @@ int main(void) {
     LL_USART_EnableIT_RXNE(UART5);
 
     extern TaskHandle_t *tasklistend;
-    //xTaskCreate(idle_thread, "idle", 256, nullptr, 0, nullptr);
     xTaskCreate(blink_thread, "_blink", 128, nullptr, 10, tasklistend++);
     xTaskCreate(main_thread, "main", 256, nullptr, 10, tasklistend++);
     xTaskCreate(servo_thread, "servo", 256, nullptr, 30, tasklistend++);
@@ -90,6 +93,7 @@ int main(void) {
     xTaskCreate(rssi_receiver_1_thread, "rssi1", 256, nullptr, 30, tasklistend++);
     xTaskCreate(rssi_receiver_2_thread, "rssi2", 256, nullptr, 30, tasklistend++);
 
+    // release VL53L1X XSHUT
     LL_GPIO_SetOutputPin(GPIOE, LL_GPIO_PIN_1);
 
     vTaskStartScheduler();
